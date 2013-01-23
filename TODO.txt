@@ -1,6 +1,6 @@
 # masquer l'icone s'il n'y a pas de nouveau mail
 
-# utiliser gnome-keyring ou GAO (gnome-control-center online-accounts) 
+# utiliser gnome-keyring ou GOA (http://developer.gnome.org/goa/stable) (gnome-control-center online-accounts) 
   au lieu d'enregistrer le mot de passe dans un fichier
 
 # afficher la liste des mail en cliquant sur l'icone ou en la survolant
