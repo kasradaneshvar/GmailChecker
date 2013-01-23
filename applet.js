@@ -67,45 +67,47 @@ MyApplet.prototype = {
     }
   },
   
-  onGfNoNewMail: function() {
-    this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
-    this.set_applet_tooltip(_('You don\'t have a new mail.'));
-    this.newMailsCount=0;
-  },
+    onGfNoNewMail: function() {
+        if (this.__icon_name != AppletDirectory + '/NoEmail.svg')
+            this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
+            
+        this.set_applet_tooltip(_('You don\'t have a new mail.'));
+        this.newMailsCount = 0;
+    },
   
-  onGfNewMail: function(a_params) {
-  
-    var absNewMailsCount=a_params.count-this.newMailsCount;
-    this.newMailsCount=a_params.count;
-    
-    if (a_params.count==1)
-      this.set_applet_tooltip(_('You have one new mail. Click to open Gmail.'));
-    else
-      this.set_applet_tooltip(_('You have '+a_params.count+' new mails. Click to open Gmail.'));
-    
-    this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
-  
-    if (absNewMailsCount>0){
-      var notifyTitle=_('You have one new mail.');
-      if (absNewMailsCount>1)
-        notifyTitle=_('You have '+absNewMailsCount+' new mails.');
-      var notifyText='';
-      
-      var mailsToDisplay=absNewMailsCount;
-      if (mailsToDisplay>4)
-        mailsToDisplay=4;
-      
-      for (var i=0; i<mailsToDisplay; i++){
-      
-        var authorName=a_params.messages[i].authorName;
-        var title=a_params.messages[i].title;
-      
-        notifyText+='<b>'+authorName+'</b>: '+title+'\r\n';
-      }
-      this.showNotify(notifyTitle,notifyText);
-    }
-    
-  },
+    onGfNewMail: function(a_params) {
+        var absNewMailsCount = a_params.count - this.newMailsCount;
+        this.newMailsCount = a_params.count;
+
+        if (a_params.count == 1)
+            this.set_applet_tooltip(_('You have one new mail. Click to open Gmail.'));
+        else
+            this.set_applet_tooltip(_('You have ' + a_params.count + ' new mails. Click to open Gmail.'));
+        
+        if (this.__icon_name != AppletDirectory + '/NewEmail.svg')
+            this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
+
+        if (absNewMailsCount > 0) {
+            var notifyTitle=_('You have one new mail.');
+            if (absNewMailsCount > 1)
+                notifyTitle=_('You have ' + absNewMailsCount + ' new mails.');
+            
+            var notifyText = '';
+            var mailsToDisplay = absNewMailsCount;
+            
+            if (mailsToDisplay > 4)
+                mailsToDisplay = 4;
+
+            for (var i = 0; i < mailsToDisplay; i++) {
+                var authorName = a_params.messages[i].authorName;
+                var title = a_params.messages[i].title;
+
+                notifyText += '<b>' + authorName + '</b>: ' + title + '\r\n';
+            }
+            
+            this.showNotify(notifyTitle,notifyText);
+        }
+    },
   
   showNotify: function(a_title,a_message){
     a_title=a_title.replace(/"/g, "&quot;");
