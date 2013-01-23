@@ -1,0 +1,8 @@
+Gmail Notify Cinnamon Applet
+Developed by Nicolas LLOBERA <nllobera@gmail.com> from 
+ # the Gmail Notifier applet by denisigo <gmailnotifier@denisigo>
+ # the Gmail Notify extension for Gnome Shell by Adam Jabłoński <jablona123@gmail.com> - [http://gn.makrodata.org]
+ # the icons of the gmail-plasmoid project - [http://code.google.com/p/gmail-plasmoid]
+version: 1.0 (22-01-2013)
+License: GPLv3
+Copyright © 2013 Nicolas LLOBERA
