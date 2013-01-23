@@ -1,5 +1,3 @@
-imports.searchPath.push( imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path );
-
 const Mainloop = imports.mainloop;
 const Lang = imports.lang;
 const Gettext = imports.gettext.domain('cinnamon-applets');
@@ -8,8 +6,11 @@ const _ = Gettext.gettext;
 const Applet = imports.ui.applet;
 const Util = imports.misc.util;
 
-const GmailFeeder=imports.gmailfeeder;
-const Settings=imports.settings;
+const AppletDirectory = imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path;
+imports.searchPath.push( AppletDirectory );
+const GmailFeeder = imports.gmailfeeder;
+const Settings = imports.settings;
+
 
 function MyApplet(orientation) {
   this._init(orientation);
@@ -29,10 +30,10 @@ MyApplet.prototype = {
     var this_=this;
 
     try {
-      this.set_applet_icon_symbolic_name('mail-unread-symbolic');
+      this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
       this.set_applet_tooltip(_("Open Gmail"));
       
-      this.gf=new GmailFeeder.GmailFeeder({
+      this.gf = new GmailFeeder.GmailFeeder({
         'username':Settings.username,
         'password':Settings.password,
         'callbacks':{
@@ -67,7 +68,7 @@ MyApplet.prototype = {
   },
   
   onGfNoNewMail: function() {
-    this.set_applet_icon_symbolic_name('mail-unread-symbolic');
+    this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
     this.set_applet_tooltip(_('You don\'t have a new mail.'));
     this.newMailsCount=0;
   },
@@ -82,7 +83,7 @@ MyApplet.prototype = {
     else
       this.set_applet_tooltip(_('You have '+a_params.count+' new mails. Click to open Gmail.'));
     
-    this.set_applet_icon_symbolic_name('mail-read-symbolic');
+    this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
   
     if (absNewMailsCount>0){
       var notifyTitle=_('You have one new mail.');
