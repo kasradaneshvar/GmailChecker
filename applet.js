@@ -27,10 +27,10 @@ MyApplet.prototype = {
 
     Applet.IconApplet.prototype._init.call(this, orientation);
     
-    var this_=this;
+    var this_ = this;
 
     try {
-      this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
+      this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
       this.set_applet_tooltip(_("Open Gmail"));
       
       this.gf = new GmailFeeder.GmailFeeder({
@@ -68,8 +68,8 @@ MyApplet.prototype = {
   },
   
     onGfNoNewMail: function() {
-        if (this.__icon_name != AppletDirectory + '/NoEmail.svg')
-            this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
+        if (this._applet_icon_box.child)
+            this._applet_icon_box.child.destroy();
             
         this.set_applet_tooltip(_('You don\'t have a new mail.'));
         this.newMailsCount = 0;
@@ -84,7 +84,7 @@ MyApplet.prototype = {
         else
             this.set_applet_tooltip(_('You have ' + a_params.count + ' new mails. Click to open Gmail.'));
         
-        if (this.__icon_name != AppletDirectory + '/NewEmail.svg')
+        if (!this._applet_icon_box.child || this.__icon_name != AppletDirectory + '/NewEmail.svg')
             this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
 
         if (absNewMailsCount > 0) {
