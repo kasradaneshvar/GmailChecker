@@ -53,15 +53,15 @@ MyApplet.prototype = {
   onGfError: function(a_code,a_params) {
     switch (a_code){
       case 'authFailed':
-        this.showNotify("GmailNotifier",_("Gmail authentication failed!"));
+        this.displayNotification("GmailNotifier",_("Gmail authentication failed!"));
         this.set_applet_tooltip(_("Gmail authentication failed!"));
       break;
       case 'feedReadFailed':
-        this.showNotify("GmailNotifier",_("Gmail feed reading failed!"));
+        this.displayNotification("GmailNotifier",_("Gmail feed reading failed!"));
         this.set_applet_tooltip(_("Gmail feed reading failed!"));
       break;
       case 'feedParseFailed':
-        this.showNotify("GmailNotifier",_("Gmail feed parsing failed!"));
+        this.displayNotification("GmailNotifier",_("Gmail feed parsing failed!"));
         this.set_applet_tooltip(_("Gmail feed parsing failed!"));
       break;
     }
@@ -88,33 +88,27 @@ MyApplet.prototype = {
             this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
 
         if (absNewMailsCount > 0) {
-            var notifyTitle=_('You have one new mail.');
-            if (absNewMailsCount > 1)
-                notifyTitle=_('You have ' + absNewMailsCount + ' new mails.');
+            var notifyTitle=_('You have ' + absNewMailsCount + ' new mails.');
             
             var notifyText = '';
-            var mailsToDisplay = absNewMailsCount;
-            
-            if (mailsToDisplay > 4)
-                mailsToDisplay = 4;
-
-            for (var i = 0; i < mailsToDisplay; i++) {
+            for (var i = 0; i < mailsToDisplay && i < 4 ; i++) {
                 var authorName = a_params.messages[i].authorName;
                 var title = a_params.messages[i].title;
 
                 notifyText += '<b>' + authorName + '</b>: ' + title + '\r\n';
             }
             
-            this.showNotify(notifyTitle,notifyText);
+            this.displayNotification(notifyTitle, notifyText);
         }
     },
   
-  showNotify: function(a_title,a_message){
-    a_title=a_title.replace(/"/g, "&quot;");
-    a_message=a_message.replace(/"/g, "&quot;");
-    
-    Util.spawnCommandLine("notify-send --icon=mail-read \""+a_title+"\" \""+a_message+"\"");
-  },
+    displayNotification: function(title, message)
+    {
+        title = title.replace(/"/g, "&quot;");
+        message = message.replace(/"/g, "&quot;");
+
+        Util.spawnCommandLine("notify-send --icon=mail-read \"" + title + "\" \"" + message + "\"");
+    },
 
   on_applet_clicked: function(event) {
     Util.spawnCommandLine("xdg-open http://gmail.com");
