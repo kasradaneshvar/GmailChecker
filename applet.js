@@ -6,6 +6,7 @@ const _ = Gettext.gettext;
 const Gtk = imports.gi.Gtk;
 
 const Applet = imports.ui.applet;
+const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
 
@@ -141,6 +142,8 @@ MyApplet.prototype = {
             this_.onChkMailTimer();
         });
         this._applet_context_menu.addMenuItem(this.check_menu_item);
+        
+        this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
         this.help_menu_item = new Applet.MenuItem(_("Help"), Gtk.STOCK_HELP, function() {
             Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.txt");
