@@ -3,7 +3,10 @@ const Lang = imports.lang;
 const Gettext = imports.gettext.domain('cinnamon-applets');
 const _ = Gettext.gettext;
 
+const Gtk = imports.gi.Gtk;
+
 const Applet = imports.ui.applet;
+const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
 
 const AppletDirectory = imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path;
@@ -23,7 +26,7 @@ MyApplet.prototype = {
     this._chkMailTimerId = 0;
     this.newMailsCount = 0;
     
-    this.checkTimeout = Settings.checktimeout*1000;
+    this.checkTimeout = Settings.checktimeout * 1000;
 
     Applet.IconApplet.prototype._init.call(this, orientation);
     
@@ -32,6 +35,8 @@ MyApplet.prototype = {
     try {
       this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
       this.set_applet_tooltip(_("Open Gmail"));
+      
+      this.createContextMenu();
       
       this.gf = new GmailFeeder.GmailFeeder({
         'username' : Settings.username,
@@ -43,7 +48,7 @@ MyApplet.prototype = {
         }
       });
 
-      this.updateChkMailTimer(5000);
+      this.updateChkMailTimer(/*5000*/this.checkTimeout);
     }
     catch (e) {
       global.logError(e);
@@ -73,6 +78,8 @@ MyApplet.prototype = {
             
         this.set_applet_tooltip(_('You don\'t have a new mail.'));
         this.newMailsCount = 0;
+        
+        this.displayNotification("No New Emails", "");
     },
   
     onGfNewMail: function(a_params) {
@@ -102,8 +109,7 @@ MyApplet.prototype = {
         }
     },
   
-    displayNotification: function(title, message)
-    {
+    displayNotification: function(title, message) {
         title = title.replace(/"/g, "&quot;");
         message = message.replace(/"/g, "&quot;");
 
@@ -115,19 +121,27 @@ MyApplet.prototype = {
   },
   
   updateChkMailTimer: function(timeout) {
-
     if (this._chkMailTimerId) {
         Mainloop.source_remove(this._chkMailTimerId);
         this._chkMailTimerId = 0;
     }
     if (timeout > 0)
-        this._chkMailTimerId = Mainloop.timeout_add(timeout,Lang.bind(this, this.onChkMailTimer));
+        this._chkMailTimerId = Mainloop.timeout_add(timeout, Lang.bind(this, this.onChkMailTimer));
   },
 
-  onChkMailTimer: function() {
-    this.gf.check();
-    this.updateChkMailTimer(this.checkTimeout);
-  }
+    onChkMailTimer: function() {
+        this.displayNotification("Check GMail", "");
+        this.gf.check();
+        this.updateChkMailTimer(this.checkTimeout);
+  },
+  
+    createContextMenu: function () {
+        var this_ = this;
+        this.check_menu_item = new Applet.MenuItem(_("Check"), Gtk.STOCK_REFRESH, function() {
+            this_.onChkMailTimer();
+        });
+        this._applet_context_menu.addMenuItem(this.check_menu_item); 
+    }
 };
 
 function main(metadata, orientation) {
