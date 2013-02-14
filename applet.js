@@ -15,6 +15,9 @@ imports.searchPath.push( AppletDirectory );
 const GmailFeeder = imports.gmailfeeder;
 const Settings = imports.settings;
 
+/***** SETTINGS *****/
+const MaxNotifications = 4;
+/********************/
 
 function MyApplet(orientation) {
   this._init(orientation);
@@ -45,11 +48,12 @@ MyApplet.prototype = {
         'callbacks' : {
           'onError' : function(a_code, a_params) { this_.onGfError(a_code,a_params) },
           'onNewMail' : function(a_params) { this_.onGfNewMail(a_params) },
-          'onNoNewMail' : function(a_params){ this_.onGfNoNewMail() }
+          'onNoNewMail' : function(a_params) { this_.onGfNoNewMail() }
         }
       });
 
-      this.updateChkMailTimer(/*5000*/this.checkTimeout);
+        // check after 5s
+        this.updateChkMailTimer(5000);
     }
     catch (e) {
       global.logError(e);
@@ -77,7 +81,7 @@ MyApplet.prototype = {
         if (this._applet_icon_box.child)
             this._applet_icon_box.child.destroy();
             
-        this.set_applet_tooltip(_('You don\'t have a new mail.'));
+        this.set_applet_tooltip(_("You don't have a new mail."));
         this.newMailsCount = 0;
         
         this.displayNotification("No New Emails", "");
@@ -96,17 +100,15 @@ MyApplet.prototype = {
             this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
 
         if (absNewMailsCount > 0) {
-            var notifyTitle=_('You have ' + absNewMailsCount + ' new mails.');
+            var notifyTitle = _('You have ' + absNewMailsCount + ' new mails.');
             
-            var notifyText = '';
-            for (var i = 0; i < mailsToDisplay && i < 4 ; i++) {
+            for (var i = 0; i < absNewMailsCount && i < MaxNotifications ; i++) {
                 var authorName = a_params.messages[i].authorName;
                 var title = a_params.messages[i].title;
-
-                notifyText += '<b>' + authorName + '</b>: ' + title + '\r\n';
+                var summary = a_params.messages[i].summary;
+                
+                this.displayNotification(authorName + '\r\n' + title, summary);
             }
-            
-            this.displayNotification(notifyTitle, notifyText);
         }
     },
   
@@ -117,9 +119,9 @@ MyApplet.prototype = {
         Util.spawnCommandLine("notify-send --icon=mail-read \"" + title + "\" \"" + message + "\"");
     },
 
-  on_applet_clicked: function(event) {
-    Util.spawnCommandLine("xdg-open http://gmail.com");
-  },
+    on_applet_clicked: function(event) {
+        Util.spawnCommandLine("xdg-open http://gmail.com");
+    },
   
   updateChkMailTimer: function(timeout) {
     if (this._chkMailTimerId) {

@@ -63,54 +63,56 @@ GmailFeeder.prototype.onAuth = function(session, msg, auth, retrying, user_data)
 }
 
 GmailFeeder.prototype.check = function() {
-  let this_ = this;
+    let this_ = this;
 
-  let message = Soup.Message.new('GET', this.feedUrl);
-  this.httpSession.queue_message(message, function(session,message) { this_.onResponse(session,message) } );
+    let message = Soup.Message.new('GET', this.feedUrl);
+    this.httpSession.queue_message(message, function(session,message) { this_.onResponse(session, message) } );
 }
   
 GmailFeeder.prototype.onResponse = function(session, message) {
-  var atomns = this.atomns;
+    var atomns = this.atomns;
 
-  if (message.status_code != 200) {
-    if (message.status_code != 401) {
-      if (this.callbacks.onError != undefined)
-        this.callbacks.onError('feedReadFailed');
+    if (message.status_code != 200) {
+        if (message.status_code != 401) {
+            if (this.callbacks.onError != undefined)
+            this.callbacks.onError('feedReadFailed');
+        }
+        return;
     }
-    return;
-  }
   
-  try {
-    var feed = message.response_body.data;
+    try {
+        var feed = message.response_body.data;
 
-    feed = feed.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "");
-    feed = new XML(feed);  
+        feed = feed.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "");
+        feed = new XML(feed);  
     
-    var newMailsCount = feed.atomns::entry.length();
+        var newMailsCount = feed.atomns::entry.length();
     
-    if (newMailsCount > 0) {
-    
-      var params = { 'count' : newMailsCount, 'messages' : [] };
+        if (newMailsCount > 0) {
+            var params = { 'count' : newMailsCount, 'messages' : [] };
    
-      for (var i = 0; i < newMailsCount; i++) {
-        var entry = feed.atomns::entry[i];
-        var message = {
-          'title' : entry.atomns::title,
-          'summary' : entry.atomns::summary,
-          'authorName' : entry.atomns::author.atomns::name,
-          'authorEmail' : entry.atomns::author.atomns::email,
-        };
-        params.messages.push(message);
-      }
-      
-      if (this.callbacks.onNewMail != undefined)
-          this.callbacks.onNewMail(params);
-    } else {
-      if (this.callbacks.onNoNewMail != undefined)
-          this.callbacks.onNoNewMail();
+            for (var i = 0; i < newMailsCount; i++) {
+                var entry = feed.atomns::entry[i];
+                var message = {
+                    'title' : entry.atomns::title,
+                    'summary' : entry.atomns::summary,
+                    'authorName' : entry.atomns::author.atomns::name,
+                    'authorEmail' : entry.atomns::author.atomns::email,
+                };
+                params.messages.push(message);
+            }
+
+            if (this.callbacks.onNewMail != undefined)
+                this.callbacks.onNewMail(params);
+        } else {
+            global.log("else");
+            if (this.callbacks.onNoNewMail != undefined)
+                this.callbacks.onNoNewMail();
+        }
+    } catch (e) {
+        if (this.callbacks.onError != undefined) {
+            global.log(e);
+            this.callbacks.onError('feedParseFailed');
+        }
     }
-  } catch (e) {
-    if (this.callbacks.onError != undefined)
-      this.callbacks.onError('feedParseFailed');
-  }
 }
