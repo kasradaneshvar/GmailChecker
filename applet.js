@@ -19,7 +19,10 @@ const Settings = imports.settings;
 const AppletName = "GmailNotifier";
 
 /***** SETTINGS *****/
+// Max number of emails displayed in the popup menu
 const MaxDisplayEmails = 4;
+// Mailbox checking timeout, in seconds
+const CheckTimeout = 300; // 300 = 5mn
 /********************/
 
 
@@ -71,7 +74,7 @@ MyApplet.prototype = {
         this._chkMailTimerId = 0;
         this.newMailsCount = 0;
         
-        this.checkTimeout = Settings.checktimeout * 1000;
+        this.checkTimeout = CheckTimeout * 1000;
 
         Applet.IconApplet.prototype._init.call(this, orientation);
         
