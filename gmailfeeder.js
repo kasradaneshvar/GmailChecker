@@ -105,13 +105,13 @@ GmailFeeder.prototype.onResponse = function(session, message) {
             if (this.callbacks.onNewMail != undefined)
                 this.callbacks.onNewMail(params);
         } else {
-            global.log("else");
             if (this.callbacks.onNoNewMail != undefined)
                 this.callbacks.onNoNewMail();
         }
-    } catch (e) {
+    }
+    catch (e) {
         if (this.callbacks.onError != undefined) {
-            global.log(e);
+            global.logError(e);
             this.callbacks.onError('feedParseFailed');
         }
     }

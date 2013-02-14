@@ -4,6 +4,7 @@ const Gettext = imports.gettext.domain('cinnamon-applets');
 const _ = Gettext.gettext;
 
 const Gtk = imports.gi.Gtk;
+const St = imports.gi.St;
 
 const Applet = imports.ui.applet;
 const Main = imports.ui.main;
@@ -15,9 +16,49 @@ imports.searchPath.push( AppletDirectory );
 const GmailFeeder = imports.gmailfeeder;
 const Settings = imports.settings;
 
+const AppletName = "GmailNotifier";
+
 /***** SETTINGS *****/
-const MaxNotifications = 4;
+const MaxDisplayEmails = 4;
 /********************/
+
+
+/* Redefine a PopupImageMenuItem to get a colored image to the left side */
+function PopupImageLeftMenuItem() {
+    this._init.apply(this, arguments);
+}
+PopupImageLeftMenuItem.prototype = {
+    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+
+    _init: function (displayName, iconName, command, params) {
+        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
+
+        // useful to use application in the connect method
+        this.command = command;
+        
+        this._icon = this._createIcon(iconName);
+        this.addActor(this._icon);
+        
+        this.label = new St.Label({ text: displayName });
+        this.addActor(this.label);
+    },
+    
+    _createIcon: function(iconName)
+    {
+        // if the iconName is a path to an icon
+        if (iconName.indexOf("/") !== -1)
+        {
+            var file = Gio.file_new_for_path(iconName);
+            var iconFile = new Gio.FileIcon({ file: file });
+            
+            return new St.Icon({ gicon: iconFile, icon_size: 24 });
+        }
+        else // use a themed icon
+        {
+            return new St.Icon({ icon_name: iconName, icon_size: 24, icon_type: St.IconType.FULLCOLOR });
+        }
+    }
+};
 
 function MyApplet(orientation) {
   this._init(orientation);
@@ -26,111 +67,109 @@ function MyApplet(orientation) {
 MyApplet.prototype = {
   __proto__: Applet.IconApplet.prototype,
 
-  _init: function(orientation) {
-    this._chkMailTimerId = 0;
-    this.newMailsCount = 0;
-    
-    this.checkTimeout = Settings.checktimeout * 1000;
+    _init: function(orientation) {
+        this._chkMailTimerId = 0;
+        this.newMailsCount = 0;
+        
+        this.checkTimeout = Settings.checktimeout * 1000;
 
-    Applet.IconApplet.prototype._init.call(this, orientation);
-    
-    var this_ = this;
+        Applet.IconApplet.prototype._init.call(this, orientation);
+        
+        var this_ = this;
 
-    try {
-      this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
-      this.set_applet_tooltip(_("Open Gmail"));
-      
-      this.createContextMenu();
-      
-      this.gf = new GmailFeeder.GmailFeeder({
-        'username' : Settings.username,
-        'password' : Settings.password,
-        'callbacks' : {
-          'onError' : function(a_code, a_params) { this_.onGfError(a_code,a_params) },
-          'onNewMail' : function(a_params) { this_.onGfNewMail(a_params) },
-          'onNoNewMail' : function(a_params) { this_.onGfNoNewMail() }
+        try {
+            this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
+          
+            this.menuManager = new PopupMenu.PopupMenuManager(this);
+            this.menu = new Applet.AppletPopupMenu(this, orientation);
+            this.menuManager.addMenu(this.menu);
+          
+            this.createContextMenu();
+
+            this.gf = new GmailFeeder.GmailFeeder({
+                'username' : Settings.username,
+                'password' : Settings.password,
+                'callbacks' : {
+                    'onError' : function(a_code, a_params) { this_.onGfError(a_code,a_params) },
+                    'onNewMail' : function(a_params) { this_.onGfNewMail(a_params) },
+                    'onNoNewMail' : function(a_params) { this_.onGfNoNewMail() }
+                }
+            });
+
+            // check after 5s
+            this.updateChkMailTimer(5000);
         }
-      });
-
-        // check after 5s
-        this.updateChkMailTimer(5000);
-    }
-    catch (e) {
-      global.logError(e);
-    }
-  },
+        catch (e) {
+            global.logError(e);
+        }
+    },
   
-  onGfError: function(a_code, a_params) {
-    switch (a_code) {
-      case 'authFailed':
-        this.displayNotification("GmailNotifier", _("Gmail authentication failed!"));
-        this.set_applet_tooltip(_("Gmail authentication failed!"));
-      break;
-      case 'feedReadFailed':
-        this.displayNotification("GmailNotifier", _("Gmail feed reading failed!"));
-        this.set_applet_tooltip(_("Gmail feed reading failed!"));
-      break;
-      case 'feedParseFailed':
-        this.displayNotification("GmailNotifier", _("Gmail feed parsing failed!"));
-        this.set_applet_tooltip(_("Gmail feed parsing failed!"));
-      break;
-    }
-  },
+    onGfError: function(a_code, a_params) {
+        switch (a_code) {
+            case 'authFailed':
+                Util.spawnCommandLine("notify-send --icon=mail-read \"Gmail authentication failed!\"");
+                this.set_applet_tooltip("Gmail authentication failed!");
+                break;
+            case 'feedReadFailed':
+                Util.spawnCommandLine("notify-send --icon=mail-read \"Gmail feed reading failed!\"");
+                this.set_applet_tooltip("Gmail feed reading failed!");
+                break;
+            case 'feedParseFailed':
+                Util.spawnCommandLine("notify-send --icon=mail-read \"Gmail feed parsing failed!\"");
+                this.set_applet_tooltip("Gmail feed parsing failed!");
+                break;
+        }
+    },
   
     onGfNoNewMail: function() {
         if (this._applet_icon_box.child)
             this._applet_icon_box.child.destroy();
             
-        this.set_applet_tooltip(_("You don't have a new mail."));
+        this.set_applet_tooltip("You don't have new emails.");
         this.newMailsCount = 0;
-        
-        this.displayNotification("No New Emails", "");
+        this.menu.removeAll();
     },
   
     onGfNewMail: function(a_params) {
+        // absNewMailsCount : real new emails since the last time onGfNewMail was launched
         var absNewMailsCount = a_params.count - this.newMailsCount;
         this.newMailsCount = a_params.count;
-
-        if (a_params.count == 1)
-            this.set_applet_tooltip(_('You have one new mail. Click to open Gmail.'));
-        else
-            this.set_applet_tooltip(_('You have ' + a_params.count + ' new mails. Click to open Gmail.'));
         
-        if (!this._applet_icon_box.child || this.__icon_name != AppletDirectory + '/NewEmail.svg')
-            this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
-
-        if (absNewMailsCount > 0) {
-            var notifyTitle = _('You have ' + absNewMailsCount + ' new mails.');
-            
-            for (var i = 0; i < absNewMailsCount && i < MaxNotifications ; i++) {
+        if (absNewMailsCount != 0) {
+            this.menu.removeAll();
+            for (var i = 0; i < this.newMailsCount && i < MaxDisplayEmails ; i++) {
                 var authorName = a_params.messages[i].authorName;
                 var title = a_params.messages[i].title;
                 var summary = a_params.messages[i].summary;
                 
-                this.displayNotification(authorName + '\r\n' + title, summary);
+                if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+                
+                var menuItem = new PopupImageLeftMenuItem(
+                    "From : " + authorName + "\r\n" + title + "\r\n\r\n" + summary + "\r\n...", 
+                    "mail-read", "xdg-open http://gmail.com");
+                menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
+                this.menu.addMenuItem(menuItem);
             }
-        }
-    },
-  
-    displayNotification: function(title, message) {
-        title = title.replace(/"/g, "&quot;");
-        message = message.replace(/"/g, "&quot;");
 
-        Util.spawnCommandLine("notify-send --icon=mail-read \"" + title + "\" \"" + message + "\"");
+            this.set_applet_tooltip('You have ' + a_params.count + ' new mails.');
+            
+            if (!this._applet_icon_box.child || this.__icon_name != AppletDirectory + '/NewEmail.svg')
+                this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
+        }
     },
 
     on_applet_clicked: function(event) {
-        Util.spawnCommandLine("xdg-open http://gmail.com");
+        this.menu.toggle();
     },
   
-  updateChkMailTimer: function(timeout) {
-    if (this._chkMailTimerId) {
-        Mainloop.source_remove(this._chkMailTimerId);
-        this._chkMailTimerId = 0;
-    }
-    if (timeout > 0)
-        this._chkMailTimerId = Mainloop.timeout_add(timeout, Lang.bind(this, this.onChkMailTimer));
-  },
+    updateChkMailTimer: function(timeout) {
+        if (this._chkMailTimerId) {
+            Mainloop.source_remove(this._chkMailTimerId);
+            this._chkMailTimerId = 0;
+        }
+        if (timeout > 0)
+            this._chkMailTimerId = Mainloop.timeout_add(timeout, Lang.bind(this, this.onChkMailTimer));
+    },
 
     onChkMailTimer: function() {
         this.gf.check();
