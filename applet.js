@@ -130,21 +130,31 @@ MyApplet.prototype = {
   },
 
     onChkMailTimer: function() {
-        this.displayNotification("Check GMail", "");
         this.gf.check();
         this.updateChkMailTimer(this.checkTimeout);
-  },
+    },
   
     createContextMenu: function () {
         var this_ = this;
+        
         this.check_menu_item = new Applet.MenuItem(_("Check"), Gtk.STOCK_REFRESH, function() {
             this_.onChkMailTimer();
         });
-        this._applet_context_menu.addMenuItem(this.check_menu_item); 
+        this._applet_context_menu.addMenuItem(this.check_menu_item);
+        
+        this.help_menu_item = new Applet.MenuItem(_("Help"), Gtk.STOCK_HELP, function() {
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.txt");
+        });
+        this._applet_context_menu.addMenuItem(this.help_menu_item);
+        
+        this.about_menu_item = new Applet.MenuItem(_("About"), Gtk.STOCK_ABOUT,  function() {
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/ABOUT.txt");
+        });
+        this._applet_context_menu.addMenuItem(this.about_menu_item);
     }
 };
 
 function main(metadata, orientation) {
-  let myApplet = new MyApplet(orientation);
-  return myApplet;
+    let myApplet = new MyApplet(orientation);
+    return myApplet;
 }
