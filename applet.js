@@ -21,9 +21,9 @@ MyApplet.prototype = {
 
   _init: function(orientation) {
     this._chkMailTimerId = 0;
-    this.newMailsCount=0;
+    this.newMailsCount = 0;
     
-    this.checkTimeout=Settings.checktimeout*1000;
+    this.checkTimeout = Settings.checktimeout*1000;
 
     Applet.IconApplet.prototype._init.call(this, orientation);
     
@@ -34,12 +34,12 @@ MyApplet.prototype = {
       this.set_applet_tooltip(_("Open Gmail"));
       
       this.gf = new GmailFeeder.GmailFeeder({
-        'username':Settings.username,
-        'password':Settings.password,
-        'callbacks':{
-          'onError':function(a_code,a_params){this_.onGfError(a_code,a_params)},
-          'onNewMail':function(a_params){this_.onGfNewMail(a_params)},
-          'onNoNewMail':function(a_params){this_.onGfNoNewMail()}
+        'username' : Settings.username,
+        'password' : Settings.password,
+        'callbacks' : {
+          'onError' : function(a_code, a_params) { this_.onGfError(a_code,a_params) },
+          'onNewMail' : function(a_params) { this_.onGfNewMail(a_params) },
+          'onNoNewMail' : function(a_params){ this_.onGfNoNewMail() }
         }
       });
 
@@ -50,18 +50,18 @@ MyApplet.prototype = {
     }
   },
   
-  onGfError: function(a_code,a_params) {
-    switch (a_code){
+  onGfError: function(a_code, a_params) {
+    switch (a_code) {
       case 'authFailed':
-        this.displayNotification("GmailNotifier",_("Gmail authentication failed!"));
+        this.displayNotification("GmailNotifier", _("Gmail authentication failed!"));
         this.set_applet_tooltip(_("Gmail authentication failed!"));
       break;
       case 'feedReadFailed':
-        this.displayNotification("GmailNotifier",_("Gmail feed reading failed!"));
+        this.displayNotification("GmailNotifier", _("Gmail feed reading failed!"));
         this.set_applet_tooltip(_("Gmail feed reading failed!"));
       break;
       case 'feedParseFailed':
-        this.displayNotification("GmailNotifier",_("Gmail feed parsing failed!"));
+        this.displayNotification("GmailNotifier", _("Gmail feed parsing failed!"));
         this.set_applet_tooltip(_("Gmail feed parsing failed!"));
       break;
     }
@@ -125,10 +125,8 @@ MyApplet.prototype = {
   },
 
   onChkMailTimer: function() {
-
-	  this.gf.check();
+    this.gf.check();
     this.updateChkMailTimer(this.checkTimeout);
-
   }
 };
 
