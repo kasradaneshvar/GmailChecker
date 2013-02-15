@@ -63,7 +63,7 @@ MyApplet.prototype = {
             });
 
             // check after 5s
-            this.updateChkMailTimer(5000);
+            this.updateTimer(5000);
         }
         catch (e) {
             global.logError(e);
@@ -79,7 +79,7 @@ MyApplet.prototype = {
         var this_ = this;
         
         this.check_menu_item = new Applet.MenuItem(_("Check"), Gtk.STOCK_REFRESH, function() {
-            this_.onChkMailTimer();
+            this_.onTimerElasped();
         });
         this._applet_context_menu.addMenuItem(this.check_menu_item);
         
@@ -158,18 +158,18 @@ MyApplet.prototype = {
         }
     },
   
-    updateChkMailTimer: function(timeout) {
+    updateTimer: function(timeout) {
         if (this._chkMailTimerId) {
             Mainloop.source_remove(this._chkMailTimerId);
             this._chkMailTimerId = 0;
         }
         if (timeout > 0)
-            this._chkMailTimerId = Mainloop.timeout_add(timeout, Lang.bind(this, this.onChkMailTimer));
+            this._chkMailTimerId = Mainloop.timeout_add(timeout, Lang.bind(this, this.onTimerElasped));
     },
 
-    onChkMailTimer: function() {
+    onTimerElasped: function() {
         this.gf.check();
-        this.updateChkMailTimer(this.checkFrequency);
+        this.updateTimer(this.checkFrequency);
     }
 };
 
