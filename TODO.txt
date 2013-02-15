@@ -3,5 +3,4 @@
 
 # traduction
 
-# lier menu au message
-https://mail.google.com/mail/u/0/#inbox/ + message_id
+# mise en forme du texte dans les menus
