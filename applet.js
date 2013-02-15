@@ -70,6 +70,31 @@ MyApplet.prototype = {
             Util.spawnCommandLine("notify-send --icon=error \"" + e + "\"");
         }
     },
+    
+    on_applet_clicked: function(event) {
+        this.menu.toggle();
+    },
+    
+    createContextMenu: function () {
+        var this_ = this;
+        
+        this.check_menu_item = new Applet.MenuItem(_("Check"), Gtk.STOCK_REFRESH, function() {
+            this_.onChkMailTimer();
+        });
+        this._applet_context_menu.addMenuItem(this.check_menu_item);
+        
+        this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
+        this.help_menu_item = new Applet.MenuItem(_("Help"), Gtk.STOCK_HELP, function() {
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.txt");
+        });
+        this._applet_context_menu.addMenuItem(this.help_menu_item);
+        
+        this.about_menu_item = new Applet.MenuItem(_("About"), Gtk.STOCK_ABOUT,  function() {
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/ABOUT.txt");
+        });
+        this._applet_context_menu.addMenuItem(this.about_menu_item);
+    },
   
     onError: function(errorCode, errorMessage) {
         switch (errorCode) {
@@ -132,10 +157,6 @@ MyApplet.prototype = {
             this.menu.removeAll();
         }
     },
-
-    on_applet_clicked: function(event) {
-        this.menu.toggle();
-    },
   
     updateChkMailTimer: function(timeout) {
         if (this._chkMailTimerId) {
@@ -149,27 +170,6 @@ MyApplet.prototype = {
     onChkMailTimer: function() {
         this.gf.check();
         this.updateChkMailTimer(this.checkFrequency);
-    },
-  
-    createContextMenu: function () {
-        var this_ = this;
-        
-        this.check_menu_item = new Applet.MenuItem(_("Check"), Gtk.STOCK_REFRESH, function() {
-            this_.onChkMailTimer();
-        });
-        this._applet_context_menu.addMenuItem(this.check_menu_item);
-        
-        this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        
-        this.help_menu_item = new Applet.MenuItem(_("Help"), Gtk.STOCK_HELP, function() {
-            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.txt");
-        });
-        this._applet_context_menu.addMenuItem(this.help_menu_item);
-        
-        this.about_menu_item = new Applet.MenuItem(_("About"), Gtk.STOCK_ABOUT,  function() {
-            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/ABOUT.txt");
-        });
-        this._applet_context_menu.addMenuItem(this.about_menu_item);
     }
 };
 
