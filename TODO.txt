@@ -1,4 +1,7 @@
 # utiliser gnome-keyring ou GOA (http://developer.gnome.org/goa/stable) (gnome-control-center online-accounts) 
   au lieu d'enregistrer le mot de passe dans un fichier
 
-# icone avec nombre d'emails
+# traduction
+
+# lier menu au message
+https://mail.google.com/mail/u/0/#inbox/ + message_id
