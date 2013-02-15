@@ -32,8 +32,8 @@ const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
 const Settings = imports.settings;
 
-const AppletName = "GmailNotifier";
-
+const AppletName = "GmailChecker";
+const GMailUrl = "https://mail.google.com";
 
 function MyApplet(orientation) {
   this._init(orientation);
@@ -74,7 +74,7 @@ MyApplet.prototype = {
             this.updateTimer(5000);
         }
         catch (e) {
-            global.logError(e);
+            global.logError(AppletName + " : " + e);
             Util.spawnCommandLine("notify-send --icon=error \"" + e + "\"");
         }
     },
@@ -94,7 +94,7 @@ MyApplet.prototype = {
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
         this.check_menu_item = new Applet.MenuItem("GMail", "internet-mail", function() {
-            Main.Util.spawnCommandLine("xdg-open http://gmail.com");
+            Main.Util.spawnCommandLine("xdg-open " + GMailUrl);
         });
         this._applet_context_menu.addMenuItem(this.check_menu_item);
         
@@ -127,7 +127,7 @@ MyApplet.prototype = {
                 break;
         }
         
-        global.logError(errorMessage);
+        global.logError(AppletName + " : " + errorMessage);
     },
   
     onChecked: function(params) {
@@ -153,8 +153,8 @@ MyApplet.prototype = {
                         message.title + "\r\n\r\n" + message.summary + "\r\n...", 
                         "mail-read", 
                         message.id == null ? 
-                        "xdg-open http://gmail.com" :
-                        "xdg-open https://mail.google.com/mail/u/0/#inbox/" + message.id);
+                        "xdg-open " + GMailUrl :
+                        "xdg-open " + GMailUrl + "/mail/#inbox/" + message.id);
                     
                     menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
                     this.menu.addMenuItem(menuItem);
