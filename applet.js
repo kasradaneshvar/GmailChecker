@@ -1,3 +1,18 @@
+// GMail Checker Cinnamon Applet
+// Developed by Nicolas LLOBERA <nllobera@gmail.com>
+// from the Gmail Notifier Cinnamon Applet by denisigo <denis@sigov.ru> [http://cinnamon-spices.linuxmint.com/applets/view/73]
+// version: 1.0 (15-02-2013)
+// License: GPLv3
+// Copyright © 2013 Nicolas LLOBERA
+
+/***** SETTINGS *****/
+// Max number of emails displayed in the popup menu
+const MaxDisplayEmails = 4;
+// Mailbox checking frequency, in minuts
+const CheckFrequency = 5;
+/********************/
+
+
 const Mainloop = imports.mainloop;
 const Lang = imports.lang;
 const Gettext = imports.gettext.domain('cinnamon-applets');
@@ -18,13 +33,6 @@ const GmailFeeder = imports.gmailfeeder;
 const Settings = imports.settings;
 
 const AppletName = "GmailNotifier";
-
-/***** SETTINGS *****/
-// Max number of emails displayed in the popup menu
-const MaxDisplayEmails = 4;
-// Mailbox checking frequency, in minuts
-const CheckFrequency = 5;
-/********************/
 
 
 function MyApplet(orientation) {
