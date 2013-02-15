@@ -125,9 +125,10 @@ MyApplet.prototype = {
     },
   
     onGfNoNewMail: function() {
-        if (this._applet_icon_box.child)
-            this._applet_icon_box.child.destroy();
-            
+        /*if (this._applet_icon_box.child)
+            this._applet_icon_box.child.destroy();*/
+        
+        this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
         this.set_applet_tooltip("You don't have new emails.");
         this.newMailsCount = 0;
         this.menu.removeAll();
@@ -156,8 +157,10 @@ MyApplet.prototype = {
 
             this.set_applet_tooltip('You have ' + a_params.count + ' new mails.');
             
-            if (!this._applet_icon_box.child || this.__icon_name != AppletDirectory + '/NewEmail.svg')
-                this.set_applet_icon_path(AppletDirectory + '/NewEmail.svg');
+            var iconName = this.newMailsCount > 9 ? "+" : this.newMailsCount;
+            var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";
+            if (this.__icon_name != iconPath)
+                this.set_applet_icon_path(iconPath);
         }
     },
 
