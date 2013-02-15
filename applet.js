@@ -58,8 +58,7 @@ MyApplet.prototype = {
                 'password' : Settings.password,
                 'callbacks' : {
                     'onError' : function(errorCode, errorMessage) { this_.onError(errorCode, errorMessage) },
-                    'onNewMail' : function(params) { this_.onNewMail(params) },
-                    'onNoNewMail' : function(a_params) { this_.onNoNewMail() }
+                    'onChecked' : function(params) { this_.onChecked(params) }
                 }
             });
 
@@ -90,40 +89,41 @@ MyApplet.prototype = {
         global.logError(errorMessage);
     },
   
-    onNoNewMail: function() {
-        this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
-        this.set_applet_tooltip("You don't have new emails.");
-        this.newEmailsCount = 0;
-        this.menu.removeAll();
-    },
-  
-    onNewMail: function(params) {
-        // absNewMailsCount : real new emails since the last time onGfNewMail was launched
-        var absNewMailsCount = params.count - this.newEmailsCount;
-        this.newEmailsCount = params.count;
-        
-        if (absNewMailsCount != 0) {
-            this.menu.removeAll();
-            for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
-                var message = params.messages[i];
-                
-                if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-                
-                var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
-                    "From : " + message.authorName + "\r\n" + 
-                    message.title + "\r\n\r\n" + message.summary + "\r\n...", 
-                    "mail-read", "xdg-open http://gmail.com");
-                
-                menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
-                this.menu.addMenuItem(menuItem);
-            }
-
-            this.set_applet_tooltip('You have ' + this.newEmailsCount + ' new mails.');
+    onChecked: function(params) {
+        if (params.count > 0) {        
+            // absNewMailsCount : real new emails since the last time onGfNewMail was launched
+            var absNewMailsCount = params.count - this.newEmailsCount;
+            this.newEmailsCount = params.count;
             
-            var iconName = this.newEmailsCount > 9 ? "+" : this.newEmailsCount;
-            var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";
-            if (this.__icon_name != iconPath)
-                this.set_applet_icon_path(iconPath);
+            if (absNewMailsCount != 0) {
+                this.menu.removeAll();
+                for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
+                    var message = params.messages[i];
+                    
+                    if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+                    
+                    var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
+                        "From : " + message.authorName + "\r\n" + 
+                        message.title + "\r\n\r\n" + message.summary + "\r\n...", 
+                        "mail-read", "xdg-open http://gmail.com");
+                    
+                    menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
+                    this.menu.addMenuItem(menuItem);
+                }
+
+                this.set_applet_tooltip('You have ' + this.newEmailsCount + ' new mails.');
+                
+                var iconName = this.newEmailsCount > 9 ? "+" : this.newEmailsCount;
+                var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";
+                if (this.__icon_name != iconPath)
+                    this.set_applet_icon_path(iconPath);
+            }
+        }
+        else {
+            this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
+            this.set_applet_tooltip("You don't have new emails.");
+            this.newEmailsCount = 0;
+            this.menu.removeAll();
         }
     },
 

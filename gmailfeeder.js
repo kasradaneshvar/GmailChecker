@@ -5,8 +5,7 @@ function GmailFeeder(data) {
 
   this.callbacks = {
     onError : undefined,
-    onNewMail : undefined,
-    onNoNewMail : undefined,
+    onChecked : undefined
   };
   
   this.username = undefined;
@@ -15,8 +14,7 @@ function GmailFeeder(data) {
   if (data != undefined){
     if (data.callbacks != undefined){
       this.callbacks.onError = data.callbacks.onError;
-      this.callbacks.onNewMail = data.callbacks.onNewMail;
-      this.callbacks.onNoNewMail = data.callbacks.onNoNewMail;
+      this.callbacks.onChecked = data.callbacks.onChecked;
     }
     
     this.username = data.username;
@@ -88,26 +86,21 @@ GmailFeeder.prototype.onResponse = function(session, message) {
     
         var newMailsCount = feed.atomns::entry.length();
     
-        if (newMailsCount > 0) {
-            var params = { 'count' : newMailsCount, 'messages' : [] };
-   
-            for (var i = 0; i < newMailsCount; i++) {
-                var entry = feed.atomns::entry[i];
-                var message = {
-                    'title' : entry.atomns::title,
-                    'summary' : entry.atomns::summary,
-                    'authorName' : entry.atomns::author.atomns::name,
-                    'authorEmail' : entry.atomns::author.atomns::email,
-                };
-                params.messages.push(message);
-            }
+        var params = { 'count' : newMailsCount, 'messages' : [] };
 
-            if (this.callbacks.onNewMail != undefined)
-                this.callbacks.onNewMail(params);
-        } else {
-            if (this.callbacks.onNoNewMail != undefined)
-                this.callbacks.onNoNewMail();
+        for (var i = 0; i < newMailsCount; i++) {
+            var entry = feed.atomns::entry[i];
+            var message = {
+                'title' : entry.atomns::title,
+                'summary' : entry.atomns::summary,
+                'authorName' : entry.atomns::author.atomns::name,
+                'authorEmail' : entry.atomns::author.atomns::email,
+            };
+            params.messages.push(message);
         }
+
+        if (this.callbacks.onChecked != undefined)
+            this.callbacks.onChecked(params);
     }
     catch (e) {
         if (this.callbacks.onError != undefined) {
