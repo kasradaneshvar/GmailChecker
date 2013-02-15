@@ -36,7 +36,7 @@ MyApplet.prototype = {
 
     _init: function(orientation) {
         this._chkMailTimerId = 0;
-        this.newMailsCount = 0;
+        this.newEmailsCount = 0;
         
         this.checkTimeout = CheckTimeout * 1000;
 
@@ -94,18 +94,18 @@ MyApplet.prototype = {
         
         this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
         this.set_applet_tooltip("You don't have new emails.");
-        this.newMailsCount = 0;
+        this.newEmailsCount = 0;
         this.menu.removeAll();
     },
   
     onGfNewMail: function(a_params) {
         // absNewMailsCount : real new emails since the last time onGfNewMail was launched
-        var absNewMailsCount = a_params.count - this.newMailsCount;
-        this.newMailsCount = a_params.count;
+        var absNewMailsCount = a_params.count - this.newEmailsCount;
+        this.newEmailsCount = a_params.count;
         
         if (absNewMailsCount != 0) {
             this.menu.removeAll();
-            for (var i = 0; i < this.newMailsCount && i < MaxDisplayEmails ; i++) {
+            for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
                 var authorName = a_params.messages[i].authorName;
                 var title = a_params.messages[i].title;
                 var summary = a_params.messages[i].summary;
@@ -121,7 +121,7 @@ MyApplet.prototype = {
 
             this.set_applet_tooltip('You have ' + a_params.count + ' new mails.');
             
-            var iconName = this.newMailsCount > 9 ? "+" : this.newMailsCount;
+            var iconName = this.newEmailsCount > 9 ? "+" : this.newEmailsCount;
             var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";
             if (this.__icon_name != iconPath)
                 this.set_applet_icon_path(iconPath);
