@@ -22,8 +22,8 @@ const AppletName = "GmailNotifier";
 /***** SETTINGS *****/
 // Max number of emails displayed in the popup menu
 const MaxDisplayEmails = 4;
-// Mailbox checking timeout, in seconds
-const CheckTimeout = 300; // 300 = 5mn
+// Mailbox checking frequency, in minuts
+const CheckFrequency = 5;
 /********************/
 
 
@@ -38,7 +38,7 @@ MyApplet.prototype = {
         this._chkMailTimerId = 0;
         this.newEmailsCount = 0;
         
-        this.checkTimeout = CheckTimeout * 1000;
+        this.checkFrequency = CheckFrequency * 60000; // 60 * 1000 : minuts to milliseconds
 
         Applet.IconApplet.prototype._init.call(this, orientation);
         
@@ -143,7 +143,7 @@ MyApplet.prototype = {
 
     onChkMailTimer: function() {
         this.gf.check();
-        this.updateChkMailTimer(this.checkTimeout);
+        this.updateChkMailTimer(this.checkFrequency);
     },
   
     createContextMenu: function () {
