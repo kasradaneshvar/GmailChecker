@@ -45,7 +45,7 @@ MyApplet.prototype = {
         var this_ = this;
 
         try {
-            this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
+            this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
           
             this.menuManager = new PopupMenu.PopupMenuManager(this);
             this.menu = new Applet.AppletPopupMenu(this, orientation);
@@ -57,9 +57,9 @@ MyApplet.prototype = {
                 'username' : Settings.username,
                 'password' : Settings.password,
                 'callbacks' : {
-                    'onError' : function(a_code, a_params) { this_.onGfError(a_code,a_params) },
-                    'onNewMail' : function(a_params) { this_.onGfNewMail(a_params) },
-                    'onNoNewMail' : function(a_params) { this_.onGfNoNewMail() }
+                    'onError' : function(errorCode, errorMessage) { this_.onError(errorCode, errorMessage) },
+                    'onNewMail' : function(params) { this_.onNewMail(params) },
+                    'onNoNewMail' : function(a_params) { this_.onNoNewMail() }
                 }
             });
 
@@ -71,8 +71,8 @@ MyApplet.prototype = {
         }
     },
   
-    onGfError: function(a_code, a_params) {
-        switch (a_code) {
+    onError: function(errorCode, errorMessage) {
+        switch (errorCode) {
             case 'authFailed':
                 Util.spawnCommandLine("notify-send --icon=mail-read \"Gmail authentication failed!\"");
                 this.set_applet_tooltip("Gmail authentication failed!");
@@ -86,40 +86,39 @@ MyApplet.prototype = {
                 this.set_applet_tooltip("Gmail feed parsing failed!");
                 break;
         }
+        
+        global.logError(errorMessage);
     },
   
-    onGfNoNewMail: function() {
-        /*if (this._applet_icon_box.child)
-            this._applet_icon_box.child.destroy();*/
-        
-        this.set_applet_icon_path(AppletDirectory + '/NoEmail.svg');
+    onNoNewMail: function() {
+        this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
         this.set_applet_tooltip("You don't have new emails.");
         this.newEmailsCount = 0;
         this.menu.removeAll();
     },
   
-    onGfNewMail: function(a_params) {
+    onNewMail: function(params) {
         // absNewMailsCount : real new emails since the last time onGfNewMail was launched
-        var absNewMailsCount = a_params.count - this.newEmailsCount;
-        this.newEmailsCount = a_params.count;
+        var absNewMailsCount = params.count - this.newEmailsCount;
+        this.newEmailsCount = params.count;
         
         if (absNewMailsCount != 0) {
             this.menu.removeAll();
             for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
-                var authorName = a_params.messages[i].authorName;
-                var title = a_params.messages[i].title;
-                var summary = a_params.messages[i].summary;
+                var message = params.messages[i];
                 
                 if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
                 
                 var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
-                    "From : " + authorName + "\r\n" + title + "\r\n\r\n" + summary + "\r\n...", 
+                    "From : " + message.authorName + "\r\n" + 
+                    message.title + "\r\n\r\n" + message.summary + "\r\n...", 
                     "mail-read", "xdg-open http://gmail.com");
+                
                 menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
                 this.menu.addMenuItem(menuItem);
             }
 
-            this.set_applet_tooltip('You have ' + a_params.count + ' new mails.');
+            this.set_applet_tooltip('You have ' + this.newEmailsCount + ' new mails.');
             
             var iconName = this.newEmailsCount > 9 ? "+" : this.newEmailsCount;
             var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";

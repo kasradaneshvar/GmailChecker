@@ -1,6 +1,6 @@
 const Soup = imports.gi.Soup;
 
-function GmailFeeder(a_params) {
+function GmailFeeder(data) {
   this.feedUrl = "https://mail.google.com/mail/feed/atom/";
 
   this.callbacks = {
@@ -12,15 +12,15 @@ function GmailFeeder(a_params) {
   this.username = undefined;
   this.password = undefined;
   
-  if (a_params != undefined){
-    if (a_params.callbacks != undefined){
-      this.callbacks.onError = a_params.callbacks.onError;
-      this.callbacks.onNewMail = a_params.callbacks.onNewMail;
-      this.callbacks.onNoNewMail = a_params.callbacks.onNoNewMail;
+  if (data != undefined){
+    if (data.callbacks != undefined){
+      this.callbacks.onError = data.callbacks.onError;
+      this.callbacks.onNewMail = data.callbacks.onNewMail;
+      this.callbacks.onNoNewMail = data.callbacks.onNoNewMail;
     }
     
-    this.username=a_params.username;
-    this.password=a_params.password;
+    this.username = data.username;
+    this.password = data.password;
   }
   
   var this_ = this;
@@ -54,7 +54,7 @@ function GmailFeeder(a_params) {
 GmailFeeder.prototype.onAuth = function(session, msg, auth, retrying, user_data) {
   if (retrying) {
     if (this.callbacks.onError != undefined) {
-      this.callbacks.onError('authFailed');
+      this.callbacks.onError("authFailed");
     }
     return;
   }
@@ -72,10 +72,10 @@ GmailFeeder.prototype.check = function() {
 GmailFeeder.prototype.onResponse = function(session, message) {
     var atomns = this.atomns;
 
-    if (message.status_code != 200) {
-        if (message.status_code != 401) {
+    if (message.status_code != 200) { // 200 = OK
+        if (message.status_code != 401) { // 401 = Unauthorized (authentication is required and has failed or has not yet been provided)
             if (this.callbacks.onError != undefined)
-            this.callbacks.onError('feedReadFailed');
+                this.callbacks.onError("feedReadFailed", "Status code : " + message.status_code);
         }
         return;
     }
@@ -111,8 +111,7 @@ GmailFeeder.prototype.onResponse = function(session, message) {
     }
     catch (e) {
         if (this.callbacks.onError != undefined) {
-            global.logError(e);
-            this.callbacks.onError('feedParseFailed');
+            this.callbacks.onError('feedParseFailed', e);
         }
     }
 }
