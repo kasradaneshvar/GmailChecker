@@ -27,14 +27,14 @@ function GmailFeeder(data) {
 		this.atomns = new Namespace('http://purl.org/atom/ns#');
 	}
     catch (e) {
-		throw 'GmailFeeder: Creating Namespace failed: '+e;
+		throw 'GmailFeeder: Creating Namespace failed: ' + e;
 	}
 	
 	try {
 		this.httpSession = new Soup.SessionAsync();
 	}
     catch (e) {
-		throw 'GmailFeeder: Creating SessionAsync failed: '+e;
+		throw 'GmailFeeder: Creating SessionAsync failed: ' + e;
 	}
 	
 	try {
@@ -87,19 +87,26 @@ GmailFeeder.prototype.onResponse = function(session, message) {
         var feed = message.response_body.data;
 
         feed = feed.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "");
-        feed = new XML(feed);	
+        feed = new XML(feed); // ECMAScript for XML (E4X)
 
         var newMailsCount = feed.atomns::entry.length();
 
         var params = { 'count' : newMailsCount, 'messages' : [] };
-
+        
+        var messageIdRegex = new RegExp("message_id=([a-z0-9]+)&");
+        
         for (var i = 0; i < newMailsCount; i++) {
             var entry = feed.atomns::entry[i];
+            
+            var messageId = entry.atomns::link.@href;
+            var resultRegex = messageIdRegex.exec(messageId);
+            
             var message = {
                     'title' : entry.atomns::title,
                     'summary' : entry.atomns::summary,
                     'authorName' : entry.atomns::author.atomns::name,
                     'authorEmail' : entry.atomns::author.atomns::email,
+                    'id' : resultRegex != null && resultRegex.length > 1 ? resultRegex[1] : null
             };
             params.messages.push(message);
         }

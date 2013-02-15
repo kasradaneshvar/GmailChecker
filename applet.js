@@ -136,7 +136,10 @@ MyApplet.prototype = {
                     var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
                         "From : " + message.authorName + "\r\n" + 
                         message.title + "\r\n\r\n" + message.summary + "\r\n...", 
-                        "mail-read", "xdg-open http://gmail.com");
+                        "mail-read", 
+                        message.id == null ? 
+                        "xdg-open http://gmail.com" :
+                        "xdg-open https://mail.google.com/mail/u/0/#inbox/" + message.id);
                     
                     menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
                     this.menu.addMenuItem(menuItem);
