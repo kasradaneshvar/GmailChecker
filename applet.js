@@ -86,8 +86,15 @@ MyApplet.prototype = {
     createContextMenu: function () {
         var this_ = this;
         
-        this.check_menu_item = new Applet.MenuItem(_("Check"), Gtk.STOCK_REFRESH, function() {
+        this.check_menu_item = new Applet.MenuItem(_("Check"), "mail-receive"/*Gtk.STOCK_REFRESH*/, function() {
             this_.onTimerElasped();
+        });
+        this._applet_context_menu.addMenuItem(this.check_menu_item);
+        
+        this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
+        this.check_menu_item = new Applet.MenuItem("GMail", "internet-mail", function() {
+            Main.Util.spawnCommandLine("xdg-open http://gmail.com");
         });
         this._applet_context_menu.addMenuItem(this.check_menu_item);
         
