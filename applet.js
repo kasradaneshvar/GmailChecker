@@ -67,6 +67,7 @@ MyApplet.prototype = {
         }
         catch (e) {
             global.logError(e);
+            Util.spawnCommandLine("notify-send --icon=error \"" + e + "\"");
         }
     },
   
@@ -95,6 +96,11 @@ MyApplet.prototype = {
             var absNewMailsCount = params.count - this.newEmailsCount;
             this.newEmailsCount = params.count;
             
+            // absNewMailsCount = 0 : no real new email since the last time -> nothing else to do
+            // absNewMailsCount > 0 : new fresh emails since the last time -> rebuild
+            // absNewMailsCount < 0 : at least one of the new email has been read -> rebuild
+            // REMARK : problem if 1 new email arrived and 1 new email was read, 
+            // the absNewMailsCount stay at 0 and the rebuild is not launched
             if (absNewMailsCount != 0) {
                 this.menu.removeAll();
                 for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
