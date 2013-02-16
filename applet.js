@@ -6,6 +6,10 @@
 // Copyright © 2013 Nicolas LLOBERA
 
 /***** SETTINGS *****/
+// Your Gmail username
+const Username = 'nllobera@gmail.com';
+// Your Gmail password
+const Password = 'pony405';
 // Max number of emails displayed in the popup menu
 const MaxDisplayEmails = 4;
 // Mailbox checking frequency, in minuts
@@ -29,12 +33,11 @@ const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
 
-const AppletDirectory = imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path;
-imports.searchPath.push( AppletDirectory );
+imports.searchPath.push(".");
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
-const Settings = imports.settings;
 
+const AppletDirectory = imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path;
 const AppletName = "GmailChecker";
 const GMailUrl = "https://mail.google.com";
 
@@ -65,8 +68,8 @@ MyApplet.prototype = {
             this.createContextMenu();
 
             this.gf = new GmailFeeder.GmailFeeder({
-                'username' : Settings.username,
-                'password' : Settings.password,
+                'username' : Username,
+                'password' : Password,
                 'callbacks' : {
                     'onError' : function(errorCode, errorMessage) { this_.onError(errorCode, errorMessage) },
                     'onChecked' : function(params) { this_.onChecked(params) }
