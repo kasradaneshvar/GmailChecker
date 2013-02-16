@@ -1,6 +1,9 @@
 # utiliser gnome-keyring ou GOA (http://developer.gnome.org/goa/stable) (gnome-control-center online-accounts) 
   au lieu d'enregistrer le mot de passe dans un fichier
 
-# traduction
+
+%%%% Difficile à réaliser %%%%
 
 # mise en forme du texte dans les menus
+
+# icones du menu contextuel plus grosses

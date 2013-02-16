@@ -15,7 +15,10 @@ const CheckFrequency = 5;
 
 const Mainloop = imports.mainloop;
 const Lang = imports.lang;
-const Gettext = imports.gettext.domain('cinnamon-applets');
+const Gettext = imports.gettext;
+// for /usr/share/locale/xx/LC_MESSAGES/gnome-applets-3.0.mo file
+Gettext.bindtextdomain("gnome-applets-3.0", "/usr/share/locale");
+Gettext.textdomain("gnome-applets-3.0");
 const _ = Gettext.gettext;
 
 const Gtk = imports.gi.Gtk;
@@ -86,7 +89,7 @@ MyApplet.prototype = {
     createContextMenu: function () {
         var this_ = this;
         
-        this.check_menu_item = new Applet.MenuItem(_("Check"), "mail-receive"/*Gtk.STOCK_REFRESH*/, function() {
+        this.check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, function() {
             this_.onTimerElasped();
         });
         this._applet_context_menu.addMenuItem(this.check_menu_item);
@@ -149,7 +152,7 @@ MyApplet.prototype = {
                     if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
                     
                     var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
-                        "From : " + message.authorName + "\r\n" + 
+                        _("From:") + " " + message.authorName + "\r\n" + 
                         message.title + "\r\n\r\n" + message.summary + "\r\n...", 
                         "mail-read", 
                         message.id == null ? 
