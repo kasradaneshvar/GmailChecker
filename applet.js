@@ -33,11 +33,11 @@ const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
 
-imports.searchPath.push(".");
+const AppletDirectory = imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path;
+imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
 
-const AppletDirectory = imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path;
 const AppletName = "GmailChecker";
 const GMailUrl = "https://mail.google.com";
 
