@@ -1,4 +1,4 @@
-// GMail Checker Cinnamon Applet
+// Gmail Checker Cinnamon Applet
 // Developed by Nicolas LLOBERA <nllobera@gmail.com>
 // from the Gmail Notifier Cinnamon Applet by denisigo <denis@sigov.ru> [http://cinnamon-spices.linuxmint.com/applets/view/73]
 // version: 1.0 (15-02-2013)
@@ -6,10 +6,6 @@
 // Copyright © 2013 Nicolas LLOBERA
 
 /***** SETTINGS *****/
-// Your Gmail username
-const Username = 'nllobera@gmail.com';
-// Your Gmail password
-const Password = 'pony405';
 // Max number of emails displayed in the popup menu
 const MaxDisplayEmails = 4;
 // Mailbox checking frequency, in minuts
@@ -25,6 +21,7 @@ Gettext.bindtextdomain("gnome-applets-3.0", "/usr/share/locale");
 Gettext.textdomain("gnome-applets-3.0");
 const _ = Gettext.gettext;
 
+const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const St = imports.gi.St;
 
@@ -38,8 +35,8 @@ imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
 
-const AppletName = "GmailChecker";
-const GMailUrl = "https://mail.google.com";
+const AppletName = "Gmail Checker";
+const GmailUrl = "https://mail.google.com";
 
 function MyApplet(orientation) {
   this._init(orientation);
@@ -53,6 +50,9 @@ MyApplet.prototype = {
         this.newEmailsCount = 0;
         
         this.checkFrequency = CheckFrequency * 60000; // 60 * 1000 : minuts to milliseconds
+        
+        this.Account = "";
+        this.Password = "";
 
         Applet.IconApplet.prototype._init.call(this, orientation);
         
@@ -66,10 +66,12 @@ MyApplet.prototype = {
             this.menuManager.addMenu(this.menu);
           
             this.createContextMenu();
+            
+            this.getLoginAndPassword();
 
             this.gf = new GmailFeeder.GmailFeeder({
-                'username' : Username,
-                'password' : Password,
+                'username' : this.Account,
+                'password' : this.Password,
                 'callbacks' : {
                     'onError' : function(errorCode, errorMessage) { this_.onError(errorCode, errorMessage) },
                     'onChecked' : function(params) { this_.onChecked(params) }
@@ -81,7 +83,7 @@ MyApplet.prototype = {
         }
         catch (e) {
             global.logError(AppletName + " : " + e);
-            Util.spawnCommandLine("notify-send --icon=error \"" + e + "\"");
+            Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": " + e + "\"");
         }
     },
     
@@ -99,8 +101,8 @@ MyApplet.prototype = {
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        this.check_menu_item = new Applet.MenuItem("GMail", "internet-mail", function() {
-            Main.Util.spawnCommandLine("xdg-open " + GMailUrl);
+        this.check_menu_item = new Applet.MenuItem("Gmail", "internet-mail", function() {
+            Main.Util.spawnCommandLine("xdg-open " + GmailUrl);
         });
         this._applet_context_menu.addMenuItem(this.check_menu_item);
         
@@ -117,23 +119,35 @@ MyApplet.prototype = {
         this._applet_context_menu.addMenuItem(this.about_menu_item);
     },
   
+    getLoginAndPassword: function () {
+        // test python python2
+        var pythonBin = "python2";
+        // test GetLoginAndPassword.py
+        var GetLoginAndPasswordFile = "GetLoginAndPassword.py";
+        
+        let [res, out, err, status] = GLib.spawn_command_line_sync(pythonBin + " " + AppletDirectory + "/" + GetLoginAndPasswordFile);
+
+        this.Account = String(out).split(" ")[0];
+        this.Password = String(out).split(" ")[1];
+    },
+    
     onError: function(errorCode, errorMessage) {
         switch (errorCode) {
             case 'authFailed':
-                Util.spawnCommandLine("notify-send --icon=mail-read \"Gmail authentication failed!\"");
-                this.set_applet_tooltip("Gmail authentication failed!");
+                Util.spawnCommandLine("notify-send --icon=mail-read \""+ AppletName + ": authentication failed\"");
+                this.set_applet_tooltip(AppletName + ": authentication failed");
                 break;
             case 'feedReadFailed':
-                Util.spawnCommandLine("notify-send --icon=mail-read \"Gmail feed reading failed!\"");
-                this.set_applet_tooltip("Gmail feed reading failed!");
+                Util.spawnCommandLine("notify-send --icon=mail-read \""+ AppletName + ": feed reading failed\"");
+                this.set_applet_tooltip(AppletName + ": feed reading failed");
                 break;
             case 'feedParseFailed':
-                Util.spawnCommandLine("notify-send --icon=mail-read \"Gmail feed parsing failed!\"");
-                this.set_applet_tooltip("Gmail feed parsing failed!");
+                Util.spawnCommandLine("notify-send --icon=mail-read \"" + AppletName + ": feed parsing failed\"");
+                this.set_applet_tooltip(AppletName + ": feed parsing failed");
                 break;
         }
         
-        global.logError(AppletName + " : " + errorMessage);
+        global.logError(AppletName + ": " + errorMessage);
     },
   
     onChecked: function(params) {
@@ -159,8 +173,8 @@ MyApplet.prototype = {
                         message.title + "\r\n\r\n" + message.summary + "\r\n...", 
                         "mail-read", 
                         message.id == null ? 
-                        "xdg-open " + GMailUrl :
-                        "xdg-open " + GMailUrl + "/mail/#inbox/" + message.id);
+                        "xdg-open " + GmailUrl :
+                        "xdg-open " + GmailUrl + "/mail/#inbox/" + message.id);
                     
                     menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
                     this.menu.addMenuItem(menuItem);
