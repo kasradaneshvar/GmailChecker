@@ -91,7 +91,7 @@ MyApplet.prototype = {
         this.menu.toggle();
     },
     
-    createContextMenu: function () {
+    createContextMenu: function() {
         var this_ = this;
         
         this.check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, function() {
@@ -119,13 +119,17 @@ MyApplet.prototype = {
         this._applet_context_menu.addMenuItem(this.about_menu_item);
     },
   
+    selectPythonBin: function() {
+        let [res, out, err, status] = GLib.spawn_command_line_sync("python -V");
+        var version = String(err).split(" ")[1][0];
+        if (version == 2)
+            return "python";
+        else
+            return "python2";
+    },
+  
     getLoginAndPassword: function () {
-        // test python python2
-        var pythonBin = "python2";
-        // test GetLoginAndPassword.py
-        var GetLoginAndPasswordFile = "GetLoginAndPassword.py";
-        
-        let [res, out, err, status] = GLib.spawn_command_line_sync(pythonBin + " " + AppletDirectory + "/" + GetLoginAndPasswordFile);
+        let [res, out, err, status] = GLib.spawn_command_line_sync(this.selectPythonBin() + " " + AppletDirectory + "/GetLoginAndPassword.py");
 
         this.Account = String(out).split(" ")[0];
         this.Password = String(out).split(" ")[1];
