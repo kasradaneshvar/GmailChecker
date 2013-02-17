@@ -129,20 +129,23 @@ MyApplet.prototype = {
 
         this.Account = String(out).split(" ")[0];
         this.Password = String(out).split(" ")[1];
+        
+        if (this.Account == "null")
+            throw "unable to get login and password from Gnome Keyring";
     },
     
     onError: function(errorCode, errorMessage) {
         switch (errorCode) {
             case 'authFailed':
-                Util.spawnCommandLine("notify-send --icon=mail-read \""+ AppletName + ": authentication failed\"");
+                Util.spawnCommandLine("notify-send --icon=error \""+ AppletName + ": authentication failed\"");
                 this.set_applet_tooltip(AppletName + ": authentication failed");
                 break;
             case 'feedReadFailed':
-                Util.spawnCommandLine("notify-send --icon=mail-read \""+ AppletName + ": feed reading failed\"");
+                Util.spawnCommandLine("notify-send --icon=error \""+ AppletName + ": feed reading failed\"");
                 this.set_applet_tooltip(AppletName + ": feed reading failed");
                 break;
             case 'feedParseFailed':
-                Util.spawnCommandLine("notify-send --icon=mail-read \"" + AppletName + ": feed parsing failed\"");
+                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": feed parsing failed\"");
                 this.set_applet_tooltip(AppletName + ": feed parsing failed");
                 break;
         }

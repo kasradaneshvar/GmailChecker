@@ -61,7 +61,7 @@ GmailFeeder.prototype.onAuth = function(session, msg, auth, retrying, user_data)
 		}
 		return;
 	}
-		
+    global.log("l&p2 : " + this.username + this.password);
 	auth.authenticate(this.username, this.password);
 }
 
