@@ -11,8 +11,8 @@ function GmailFeeder(data) {
 	this.username = undefined;
 	this.password = undefined;
 	
-	if (data != undefined){
-		if (data.callbacks != undefined){
+	if (data != undefined) {
+		if (data.callbacks != undefined) {
 			this.callbacks.onError = data.callbacks.onError;
 			this.callbacks.onChecked = data.callbacks.onChecked;
 		}
@@ -21,8 +21,6 @@ function GmailFeeder(data) {
 		this.password = data.password;
 	}
 	
-	var this_ = this;
-
 	try {
 		this.atomns = new Namespace('http://purl.org/atom/ns#');
 	}
@@ -44,6 +42,7 @@ function GmailFeeder(data) {
 		throw 'GmailFeeder: Adding ProxyResolverDefault failed: ' + e;
 	}
 	
+    var this_ = this;
 	try {
 		this.httpSession.connect('authenticate', 
             function(session, msg, auth, retrying, user_data) { 
@@ -61,7 +60,8 @@ GmailFeeder.prototype.onAuth = function(session, msg, auth, retrying, user_data)
 		}
 		return;
 	}
-    global.log("l&p2 : " + this.username + this.password);
+    
+    //global.log("connect " + this.username + " " + this.password);
 	auth.authenticate(this.username, this.password);
 }
 
@@ -69,7 +69,7 @@ GmailFeeder.prototype.check = function() {
     let this_ = this;
 
     let message = Soup.Message.new('GET', this.feedUrl);
-    this.httpSession.queue_message(message, function(session,message) { this_.onResponse(session, message) } );
+    this.httpSession.queue_message(message, function(session, message) { this_.onResponse(session, message) } );
 }
 	
 GmailFeeder.prototype.onResponse = function(session, message) {
@@ -120,3 +120,13 @@ GmailFeeder.prototype.onResponse = function(session, message) {
         }
     }
 }
+
+/*GmailFeeder.prototype.destroy = function() {
+    this.callbacks = {
+		onError : undefined,
+		onChecked : undefined
+	};
+	
+	this.username = undefined;
+	this.password = undefined;
+}*/

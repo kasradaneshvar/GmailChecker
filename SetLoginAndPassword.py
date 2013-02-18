@@ -23,3 +23,9 @@ GnomeKeyring.item_create_sync(
     {"account" : username, "application" : "Gmail Checker"}, password, True)
 
 print("Login and password stored in Gnome Keyring!")
+
+# Write something into the .tmp file
+with open(r'/tmp/gmailchecker.tmp', 'w') as fichier:
+	fichier.write('1')
+
+raw_input("\nPress Enter to quit...")

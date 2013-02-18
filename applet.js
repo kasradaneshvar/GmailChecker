@@ -21,6 +21,7 @@ Gettext.bindtextdomain("gnome-applets-3.0", "/usr/share/locale");
 Gettext.textdomain("gnome-applets-3.0");
 const _ = Gettext.gettext;
 
+const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const St = imports.gi.St;
@@ -48,6 +49,7 @@ MyApplet.prototype = {
     _init: function(orientation) {
         this._chkMailTimerId = 0;
         this.newEmailsCount = 0;
+        this.onCredentialsChangedCalls = 0;
         
         this.checkFrequency = CheckFrequency * 60000; // 60 * 1000 : minuts to milliseconds
         
@@ -55,8 +57,6 @@ MyApplet.prototype = {
         this.Password = "";
 
         Applet.IconApplet.prototype._init.call(this, orientation);
-        
-        var this_ = this;
 
         try {
             this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
@@ -67,19 +67,9 @@ MyApplet.prototype = {
           
             this.createContextMenu();
             
-            this.getLoginAndPassword();
-
-            this.gf = new GmailFeeder.GmailFeeder({
-                'username' : this.Account,
-                'password' : this.Password,
-                'callbacks' : {
-                    'onError' : function(errorCode, errorMessage) { this_.onError(errorCode, errorMessage) },
-                    'onChecked' : function(params) { this_.onChecked(params) }
-                }
-            });
-
-            // check after 5s
-            this.updateTimer(5000);
+            this.buildGmailFeeder();
+            
+            this.listenCredentialsChanges();
         }
         catch (e) {
             global.logError(AppletName + " : " + e);
@@ -101,10 +91,17 @@ MyApplet.prototype = {
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        this.check_menu_item = new Applet.MenuItem("Gmail", "internet-mail", function() {
+        this.openGmail_menu_item = new Applet.MenuItem("Gmail", "internet-mail", function() {
             Main.Util.spawnCommandLine("xdg-open " + GmailUrl);
         });
-        this._applet_context_menu.addMenuItem(this.check_menu_item);
+        this._applet_context_menu.addMenuItem(this.openGmail_menu_item);
+        
+        this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
+        this.setLoginAndPassword_menu_item = new Applet.MenuItem("Login & Pass", Gtk.STOCK_DIALOG_AUTHENTICATION, function() {
+            this_.setLoginAndPassword();
+        });
+        this._applet_context_menu.addMenuItem(this.setLoginAndPassword_menu_item);
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
@@ -118,7 +115,30 @@ MyApplet.prototype = {
         });
         this._applet_context_menu.addMenuItem(this.about_menu_item);
     },
-  
+
+    buildGmailFeeder: function() {
+        //global.log("buildGmailFeeder");
+        this.getLoginAndPassword();
+        
+        var regex = new RegExp("[a-z0-9\.\+-_]+@gmail\.[a-z]{2,3}", "i");
+        if (regex.test(this.Account)) {
+            var this_ = this;
+            this.gf = new GmailFeeder.GmailFeeder({
+                'username' : this.Account,
+                'password' : this.Password,
+                'callbacks' : {
+                    'onError' : function(errorCode, errorMessage) { this_.onError(errorCode, errorMessage) },
+                    'onChecked' : function(params) { this_.onChecked(params) }
+                }
+            });
+
+            // check after 2s
+            this.updateTimer(2000);
+        }
+        else
+            Util.spawnCommandLine("notify-send --icon=error \""+ this.Account + " is not a correct Gmail account (name@gmail.com)\"");
+    },
+
     selectPythonBin: function() {
         let [res, out, err, status] = GLib.spawn_command_line_sync("python -V");
         var version = String(err).split(" ")[1][0];
@@ -129,13 +149,41 @@ MyApplet.prototype = {
     },
   
     getLoginAndPassword: function () {
-        let [res, out, err, status] = GLib.spawn_command_line_sync(this.selectPythonBin() + " " + AppletDirectory + "/GetLoginAndPassword.py");
+        let [res, out, err, status] = GLib.spawn_command_line_sync(
+            this.selectPythonBin() + " " + AppletDirectory + "/GetLoginAndPassword.py");
 
         this.Account = String(out).split(" ")[0];
         this.Password = String(out).split(" ")[1];
         
         if (this.Account == "null")
             throw "unable to get login and password from Gnome Keyring";
+    },
+    
+    setLoginAndPassword: function () {
+        GLib.spawn_command_line_async(
+            "gnome-terminal -x " + this.selectPythonBin() + " " + AppletDirectory + "/SetLoginAndPassword.py");
+        // the call of gnome-terminal does not wait the end of gnome-terminal to continue
+        // even in sync mode (because it is a window)
+        // that is why there is no more code here, because there is no way to wait
+        // the new credentils entered by the user
+        // to bypass this problem the applet listen the mofifications of the /tmp/gmailchecker.tmp file
+        // this file is modified after the user has entered the new credentials
+        // this way the applet is able to know exactly when the new credentials are ready
+    },
+    
+    listenCredentialsChanges: function() {
+        let file = Gio.file_new_for_path("/tmp/gmailchecker.tmp");
+        this._monitor = file.monitor_file(Gio.FileMonitorFlags.NONE, null);
+        this._monitor.connect('changed', Lang.bind(this, this.onCredentialsChanged));
+    },
+    
+    onCredentialsChanged: function() {      
+        // for 1 modification the onCredentialsChanged is called 3 times
+        if (++this.onCredentialsChangedCalls > 2)
+        {
+            this.onCredentialsChangedCalls = 0;
+            this.buildGmailFeeder();
+        }
     },
     
     onError: function(errorCode, errorMessage) {
