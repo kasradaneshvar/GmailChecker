@@ -3,11 +3,12 @@ DESCRIPTION
 Gmail Checker uses Atom throw a feed reader to receive new emails alerts.
 The Gmail Checker will light when you will receive new emails and show you the number of your unread emails.
 Your unread emails are displayed as a menu when you click on the Gmail Checker icon.
-
+The Gmail inbox is checked at a frequency of 5 minuts by default, 
+  but you can do a manual check : right-click on the Gmail Checker icon -> Check
 
 SETTINGS
 ========
-To configure the credentials : right-click on Gmail Checker -> Login & Pass
+To configure the credentials : right-click on the Gmail Checker icon -> Login & Pass
 A console will be displayed asking you your Gmail account and your password to store them in Gnome Keyring.
 Then Gmail Checker will try to connect to Gmail with these credentials.
 You can change your credentials this way at anytime.
