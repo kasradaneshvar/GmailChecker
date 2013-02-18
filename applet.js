@@ -67,12 +67,13 @@ MyApplet.prototype = {
           
             this.createContextMenu();
             
-            this.buildGmailFeeder();
-            
+            // needs to be before buildGmailFeeder because buildGmailFeeder may throw exceptions
             this.listenCredentialsChanges();
+            
+            this.buildGmailFeeder();
         }
         catch (e) {
-            global.logError(AppletName + " : " + e);
+            global.logError(AppletName + ": " + e);
             Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": " + e + "\"");
         }
     },
