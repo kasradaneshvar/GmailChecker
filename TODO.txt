@@ -1,9 +1,18 @@
-# utiliser gnome-keyring ou GOA (http://developer.gnome.org/goa/stable) (gnome-control-center online-accounts) 
-  au lieu d'enregistrer le mot de passe dans un fichier
+%%%% Important %%%%
 
+# Call Gnome Keyring methods directly from Gjs without Python
+  http://stackoverflow.com/questions/14920159/unable-to-create-a-garray-in-gjs
+  Another solution could to be use Vala to call Gnome Keyring methods, then to import the Vala library into Gjs
 
-%%%% Difficile à réaliser %%%%
+# Display error when an syntaxically valid Gmail account (name@gmail.com) tries to connect
+  but this account doesn't exit
+  
+# Use a window form to set or change the credentials instead of the console
 
-# mise en forme du texte dans les menus
+%%%% Nice to have %%%%
 
-# icones du menu contextuel plus grosses
+# Use font style in the menu items
+
+# Bigger context menu icons
+
+# Better traduction file (*.mo/*.po)
