@@ -221,41 +221,32 @@ MyApplet.prototype = {
   
     onChecked: function(params) {
         if (params.count > 0) {        
-            // absNewMailsCount : real new emails since the last time onGfNewMail was launched
-            var absNewMailsCount = params.count - this.newEmailsCount;
             this.newEmailsCount = params.count;
+            this.menu.removeAll();
             
-            // absNewMailsCount = 0 : no real new email since the last time -> nothing else to do
-            // absNewMailsCount > 0 : new fresh emails since the last time -> rebuild
-            // absNewMailsCount < 0 : at least one of the new email has been read -> rebuild
-            // REMARK : problem if 1 new email arrived and 1 new email was read, 
-            // the absNewMailsCount stay at 0 and the rebuild is not launched
-            if (absNewMailsCount != 0) {
-                this.menu.removeAll();
-                for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
-                    var message = params.messages[i];
-                    
-                    if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-                    
-                    var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
-                        _("From:") + " " + message.authorName + "\r\n" + 
-                        message.title + "\r\n\r\n" + message.summary + "\r\n...", 
-                        "mail-read", 
-                        message.id == null ? 
-                        "xdg-open " + GmailUrl :
-                        "xdg-open " + GmailUrl + "/mail/#inbox/" + message.id);
-                    
-                    menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
-                    this.menu.addMenuItem(menuItem);
-                }
-
-                this.set_applet_tooltip('You have ' + this.newEmailsCount + ' new mails.');
+            for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
+                var message = params.messages[i];
                 
-                var iconName = this.newEmailsCount > 9 ? "+" : this.newEmailsCount;
-                var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";
-                if (this.__icon_name != iconPath)
-                    this.set_applet_icon_path(iconPath);
+                if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+                
+                var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
+                    _("From:") + " " + message.authorName + "\r\n" + 
+                    message.title + "\r\n\r\n" + message.summary + "\r\n...", 
+                    "mail-read", 
+                    message.id == null ? 
+                    "xdg-open " + GmailUrl :
+                    "xdg-open " + GmailUrl + "/mail/#inbox/" + message.id);
+                
+                menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
+                this.menu.addMenuItem(menuItem);
             }
+
+            this.set_applet_tooltip('You have ' + this.newEmailsCount + ' new mails.');
+            
+            var iconName = this.newEmailsCount > 9 ? "+" : this.newEmailsCount;
+            var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";
+            if (this.__icon_name != iconPath)
+                this.set_applet_icon_path(iconPath);
         }
         else {
             this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
