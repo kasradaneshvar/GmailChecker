@@ -31,7 +31,7 @@ const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
 
-const AppletDirectory = imports.ui.appletManager.appletMeta["gmailnotifier@denisigo"].path;
+const AppletDirectory = imports.ui.appletManager.appletMeta["GmailChecker@LLOBERA"].path;
 imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
@@ -140,7 +140,7 @@ MyApplet.prototype = {
             this.updateTimer(2000);
         }
         else
-            Util.spawnCommandLine("notify-send --icon=error \""+ this.Account + " is not a correct Gmail account (name@gmail.com)\"");
+            Util.spawnCommandLine("notify-send --icon=error \"'"+ this.Account + "' is not a correct Gmail account (name@gmail.com)\"");
     },
 
     selectPythonBin: function() {
