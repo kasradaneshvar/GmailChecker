@@ -8,7 +8,7 @@ SETTINGS
 ========
 To configure the credentials : right-click on Gmail Checker -> Login & Pass
 A console will be displayed asking you your Gmail account and your password to store them in Gnome Keyring.
-Then Gmail Checker will try to connect to Gmail with this credentials.
+Then Gmail Checker will try to connect to Gmail with these credentials.
 You can change your credentials this way at anytime.
 
 Two other settings are available at the begginng of the applet.js file :
