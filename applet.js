@@ -120,6 +120,9 @@ MyApplet.prototype = {
         //global.log("buildGmailFeeder");
         this.getLoginAndPassword();
         
+        // As the entering of invalid Gmail accounts is not detected as an error by GmailFeeder
+        // here is a test to limit the problem
+        // it still persists with syntaxical valid but non existing Gmail account (dudul@gmail.com)
         var regex = new RegExp("[a-z0-9\.\+-_]+@gmail\.[a-z]{2,3}", "i");
         if (regex.test(this.Account)) {
             var this_ = this;
@@ -186,23 +189,32 @@ MyApplet.prototype = {
         }
     },
     
-    onError: function(errorCode, errorMessage) {
+    onError: function(errorCode, errorMessage) {        
+        var message = "";
         switch (errorCode) {
             case 'authFailed':
-                Util.spawnCommandLine("notify-send --icon=error \""+ AppletName + ": authentication failed\"");
-                this.set_applet_tooltip(AppletName + ": authentication failed");
+                message = AppletName + ": authentication failed";
+                
+                this.newEmailsCount = 0;
+                this.menu.removeAll();
+                
+                var iconPath = AppletDirectory + "/icons/NoEmail.svg";
+                if (this.__icon_name != iconPath)
+                    this.set_applet_icon_path(iconPath);
                 break;
+                
             case 'feedReadFailed':
-                Util.spawnCommandLine("notify-send --icon=error \""+ AppletName + ": feed reading failed\"");
-                this.set_applet_tooltip(AppletName + ": feed reading failed");
+                message = AppletName + ": feed reading failed\n" + errorMessage;
                 break;
+                
             case 'feedParseFailed':
-                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": feed parsing failed\"");
-                this.set_applet_tooltip(AppletName + ": feed parsing failed");
+                message = AppletName + ": feed parsing failed\n" + errorMessage;
                 break;
         }
         
-        global.logError(AppletName + ": " + errorMessage);
+        Util.spawnCommandLine("notify-send --icon=error \""+ message + "\"");
+        this.set_applet_tooltip(message);
+        global.logError(message);
     },
   
     onChecked: function(params) {

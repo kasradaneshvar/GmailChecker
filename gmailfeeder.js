@@ -82,6 +82,7 @@ GmailFeeder.prototype.onResponse = function(session, message) {
         }
         return;
     }
+    // 405 Method Not Allowed
 
     try {
         var feed = message.response_body.data;
