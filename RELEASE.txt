@@ -1,0 +1,7 @@
+v1.0 - 18-02-2013
+========
+First version
+Display an icon with the number of unread emails
+Unread emails display in menu items
+A way to manually check the Gmail inbox
+Gmail account password stored in Gnome Keyring
