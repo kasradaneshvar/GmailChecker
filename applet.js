@@ -1,7 +1,8 @@
 // Gmail Checker Cinnamon Applet
-// Developed by Nicolas LLOBERA <nllobera@gmail.com>
-// from the Gmail Notifier Cinnamon Applet by denisigo <denis@sigov.ru> [http://cinnamon-spices.linuxmint.com/applets/view/73]
-// version: 1.0 (15-02-2013)
+// Developed by Nicolas LLOBERA <nllobera@gmail.com> from
+// # the Gmail Notifier Cinnamon Applet by denisigo <denis@sigov.ru> [http://cinnamon-spices.linuxmint.com/applets/view/73]
+// # the icons of the gmail-plasmoid project - [http://code.google.com/p/gmail-plasmoid]
+// version: 1.0 (18-02-2013)
 // License: GPLv3
 // Copyright © 2013 Nicolas LLOBERA
 
