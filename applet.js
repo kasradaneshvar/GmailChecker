@@ -249,7 +249,9 @@ MyApplet.prototype = {
                 this.set_applet_icon_path(iconPath);
         }
         else {
-            this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
+            var iconPath = AppletDirectory + "/icons/NoEmail.svg";
+            if (this.__icon_name != iconPath)
+                this.set_applet_icon_path(iconPath);
             this.set_applet_tooltip("You don't have new emails.");
             this.newEmailsCount = 0;
             this.menu.removeAll();
