@@ -195,7 +195,7 @@ MyApplet.prototype = {
         var message = "";
         switch (errorCode) {
             case 'authFailed':
-                message = AppletName + ": authentication failed";
+                message = AppletName + ": authentication failed.";
                 
                 this.newEmailsCount = 0;
                 this.menu.removeAll();
@@ -206,11 +206,11 @@ MyApplet.prototype = {
                 break;
                 
             case 'feedReadFailed':
-                message = AppletName + ": feed reading failed\n" + errorMessage;
+                message = AppletName + ": feed reading failed. " + errorMessage;
                 break;
                 
             case 'feedParseFailed':
-                message = AppletName + ": feed parsing failed\n" + errorMessage;
+                message = AppletName + ": feed parsing failed. " + errorMessage;
                 break;
         }
         
