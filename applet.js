@@ -2,7 +2,7 @@
 // Developed by Nicolas LLOBERA <nllobera@gmail.com> from
 // # the Gmail Notifier Cinnamon Applet by denisigo <denis@sigov.ru> [http://cinnamon-spices.linuxmint.com/applets/view/73]
 // # the icons of the gmail-plasmoid project - [http://code.google.com/p/gmail-plasmoid]
-// version: 1.0 (18-02-2013)
+// version: 1.1 (03-03-2013)
 // License: GPLv3
 // Copyright © 2013 Nicolas LLOBERA
 

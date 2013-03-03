@@ -1,3 +1,8 @@
+v1.1 - 03-03-2013
+========
+Emails test allows every syntaxic valid emails (not only those from Gmail) since it is possible to set up Gmail for your own domain
+Don't reload 'NoEmail' icon if it is already loaded
+
 v1.0 - 18-02-2013
 ========
 First version
