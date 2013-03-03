@@ -123,9 +123,11 @@ MyApplet.prototype = {
         this.getLoginAndPassword();
         
         // As the entering of invalid Gmail accounts is not detected as an error by GmailFeeder
-        // here is a test to limit the problem
-        // it still persists with syntaxical valid but non existing Gmail account (dudul@gmail.com)
-        var regex = new RegExp("[a-z0-9\.\+-_]+@gmail\.[a-z]{2,3}", "i");
+        // here is a test to check the syntax of the entered email.
+        // The regular expression is not specific to Gmail account 
+        // since it is possible to set up Gmail for your own domain.
+        // The problem still persists with syntaxical valid but non existing email account (dudul@gmail.com)
+        var regex = new RegExp("[a-zA-Z0-9_\.-]+@[a-zA-Z0-9_\.-]+");
         if (regex.test(this.Account)) {
             var this_ = this;
             this.gf = new GmailFeeder.GmailFeeder({
@@ -141,7 +143,7 @@ MyApplet.prototype = {
             this.updateTimer(2000);
         }
         else
-            Util.spawnCommandLine("notify-send --icon=error \"'"+ this.Account + "' is not a correct Gmail account (name@gmail.com)\"");
+            Util.spawnCommandLine("notify-send --icon=error \"'"+ this.Account + "' is not a correct email account (ex: name@gmail.com)\"");
     },
 
     selectPythonBin: function() {
