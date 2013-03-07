@@ -108,12 +108,12 @@ MyApplet.prototype = {
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
         this.help_menu_item = new Applet.MenuItem(_("Help"), Gtk.STOCK_HELP, function() {
-            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.txt");
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.md");
         });
         this._applet_context_menu.addMenuItem(this.help_menu_item);
         
         this.about_menu_item = new Applet.MenuItem(_("About"), Gtk.STOCK_ABOUT,  function() {
-            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/ABOUT.txt");
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/LICENSE.md");
         });
         this._applet_context_menu.addMenuItem(this.about_menu_item);
     },
