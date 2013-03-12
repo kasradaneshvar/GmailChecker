@@ -75,14 +75,32 @@ GmailFeeder.prototype.check = function() {
 GmailFeeder.prototype.onResponse = function(session, message) {
     var atomns = this.atomns;
 
-    if (message.status_code != 200) { // 200 = OK
-        if (message.status_code != 401) { // 401 = Unauthorized (authentication is required and has failed or has not yet been provided)
+    if (message.status_code != 200) {
+        if (message.status_code != 401) {
             if (this.callbacks.onError != undefined)
                 this.callbacks.onError("feedReadFailed", "Status code : " + message.status_code);
         }
         return;
     }
-    // 405 Method Not Allowed
+    
+    /* Status Code
+     * 1 SOUP_STATUS_CANCELLED
+     * 2 SOUP_STATUS_CANT_RESOLVE
+     * 3 SOUP_STATUS_CANT_RESOLVE_PROXY
+     * 4 SOUP_STATUS_CANT_CONNECT
+     * 5 SOUP_STATUS_CANT_CONNECT_PROXY
+     * 6 SOUP_STATUS_SSL_FAILED
+     * 7 SOUP_STATUS_IO_ERROR
+     * 8 SOUP_STATUS_MALFORMED
+     * 9 SOUP_STATUS_TRY_AGAIN
+     * 10 SOUP_STATUS_TOO_MANY_REDIRECTS
+     * 11 SOUP_STATUS_TLS_FAILED
+     * 
+     * 200 Ok
+     * 
+     * 401 Unauthorized (authentication is required and has failed or has not yet been provided)
+     * 405 Method Not Allowed
+     */
 
     try {
         var feed = message.response_body.data;
