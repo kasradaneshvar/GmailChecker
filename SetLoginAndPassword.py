@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import gnomekeyring as GnomeKeyring
+import getpass
 
 username = raw_input('Enter Gmail login (name@gmail.com) > ')
-password = raw_input('Enter password > ')
+password = getpass.getpass('Enter password > ')
 
 
 keyring = GnomeKeyring.get_default_keyring_sync() # login
