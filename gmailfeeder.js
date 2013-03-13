@@ -76,10 +76,13 @@ GmailFeeder.prototype.onResponse = function(session, message) {
     var atomns = this.atomns;
 
     if (message.status_code != 200) {
-        if (message.status_code != 401) {
+        if (message.status_code != 401 && message.status_code != 7) {
             if (this.callbacks.onError != undefined)
                 this.callbacks.onError("feedReadFailed", "Status code : " + message.status_code);
         }
+        
+        // log only for warning message
+        global.log("Feed reading failed. Status code : " + message.status_code);
         return;
     }
     
