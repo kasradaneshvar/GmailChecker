@@ -66,6 +66,8 @@ Important
   
 * Use a window form to set or change the credentials instead of the console
 
+* Add proxy setting
+
 Nice to have
 ------------
 * Play a sound when new emails are found
