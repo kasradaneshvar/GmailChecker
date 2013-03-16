@@ -50,6 +50,7 @@ MyApplet.prototype = {
         
         this.Account = "";
         this.Password = "";
+        this.CredentialsError = true;
 
         Applet.IconApplet.prototype._init.call(this, orientation);
 
@@ -78,11 +79,12 @@ MyApplet.prototype = {
     },
     
     createContextMenu: function() {
-        var this_ = this;
-        
-        this.check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, function() {
-            this_.onTimerElasped();
-        });
+        this.check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, Lang.bind(this, function() {
+            if(!this.CredentialsError)
+                this.onTimerElasped();
+            else
+                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials.\"");
+        }));
         this._applet_context_menu.addMenuItem(this.check_menu_item);
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -94,9 +96,9 @@ MyApplet.prototype = {
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        this.setLoginAndPassword_menu_item = new Applet.MenuItem("Login & Pass", Gtk.STOCK_DIALOG_AUTHENTICATION, function() {
-            this_.setLoginAndPassword();
-        });
+        this.setLoginAndPassword_menu_item = new Applet.MenuItem("Login & Pass", Gtk.STOCK_DIALOG_AUTHENTICATION, Lang.bind(this, function() {
+            this.setLoginAndPassword();
+        }));
         this._applet_context_menu.addMenuItem(this.setLoginAndPassword_menu_item);
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -115,28 +117,30 @@ MyApplet.prototype = {
     buildGmailFeeder: function() {
         this.getLoginAndPassword();
         
-        // As invalid Google accounts is not detected as an error by GmailFeeder
-        // here is a test to check the syntax of the email.
-        // The regular expression is not specific to Gmail account 
-        // since it is possible to set up Gmail for your own domain.
-        // The problem still persists with syntaxical valid but non existing email account (dudul@gmail.com)
-        var regex = new RegExp("[a-zA-Z0-9_\.-]+@[a-zA-Z0-9_\.-]+");
-        if (regex.test(this.Account)) {
-            var this_ = this;
-            this.gf = new GmailFeeder.GmailFeeder({
-                'username' : this.Account,
-                'password' : this.Password,
-                'callbacks' : {
-                    'onError' : function(errorCode, errorMessage) { this_.onError(errorCode, errorMessage) },
-                    'onChecked' : function(params) { this_.onChecked(params) }
-                }
-            });
+        if(!this.CredentialsError)
+        {
+            // As invalid Google accounts is not detected as an error by GmailFeeder
+            // here is a test to check the syntax of the email.
+            // The regular expression is not specific to Gmail account 
+            // since it is possible to set up Gmail for your own domain.
+            // The problem still persists with syntaxical valid but non existing email account (dudul@gmail.com)
+            var regex = new RegExp("[a-zA-Z0-9_\.-]+@[a-zA-Z0-9_\.-]+");
+            if (regex.test(this.Account)) {
+                this.gf = new GmailFeeder.GmailFeeder({
+                    'username' : this.Account,
+                    'password' : this.Password,
+                    'callbacks' : {
+                        'onError' : Lang.bind(this, function(errorCode, errorMessage) { this.onError(errorCode, errorMessage) }),
+                        'onChecked' : Lang.bind(this, function(params) { this.onChecked(params) })
+                    }
+                });
 
-            // check after 2s
-            this.updateTimer(2000);
+                // check after 2s
+                this.updateTimer(2000);
+            }
+            else
+                Util.spawnCommandLine("notify-send --icon=error \"'"+ this.Account + "' is not a correct email account (ex: name@gmail.com)\"");
         }
-        else
-            Util.spawnCommandLine("notify-send --icon=error \"'"+ this.Account + "' is not a correct email account (ex: name@gmail.com)\"");
     },
 
     selectPythonBin: function() {
@@ -151,12 +155,25 @@ MyApplet.prototype = {
     getLoginAndPassword: function () {
         let [res, out, err, status] = GLib.spawn_command_line_sync(
             this.selectPythonBin() + " " + AppletDirectory + "/GetLoginAndPassword.py");
-
-        this.Account = String(out).split(" ")[0];
-        this.Password = String(out).split(" ")[1];
         
-        if (this.Account == "null")
-            throw "unable to get login and password from Gnome Keyring";
+        let code = String(out).split(" ")[0];
+        if(code == "0")
+        {
+            this.Account = String(out).split(" ")[1];
+            this.Password = String(out).split(" ")[2];
+            this.CredentialsError = false;
+        }
+        else if(code == "1")
+        {
+            this.CredentialsError = true;
+            Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": unable to get login and password from Gnome Keyring.\"");
+        }
+        else
+        {
+            this.CredentialsError = true;
+            Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": error in GetLoginAndPassword.py\"");
+            global.logError(AppletName + ": " + String(out).split(" ")[1]);
+        }
     },
     
     setLoginAndPassword: function () {
