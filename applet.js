@@ -6,13 +6,6 @@
 // License: GPLv3
 // Copyright © 2013 Nicolas LLOBERA
 
-/***** SETTINGS *****/
-// Max number of emails displayed in the popup menu
-const MaxDisplayEmails = 4;
-// Mailbox checking frequency, in minuts
-const CheckFrequency = 5;
-/********************/
-
 
 const Mainloop = imports.mainloop;
 const Lang = imports.lang;
@@ -36,23 +29,24 @@ const AppletDirectory = imports.ui.appletManager.appletMeta["GmailChecker@LLOBER
 imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
+const Settings = imports.settings;
 
 const AppletName = "Gmail Checker";
 const GmailUrl = "https://mail.google.com";
 
 function MyApplet(orientation) {
-  this._init(orientation);
+    this._init(orientation);
 }
 
 MyApplet.prototype = {
-  __proto__: Applet.IconApplet.prototype,
+    __proto__: Applet.IconApplet.prototype,
 
     _init: function(orientation) {
         this._chkMailTimerId = 0;
         this.newEmailsCount = 0;
         this.onCredentialsChangedCalls = 0;
         
-        this.checkFrequency = CheckFrequency * 60000; // 60 * 1000 : minuts to milliseconds
+        this.checkFrequency = Settings.CheckFrequency * 60000; // 60 * 1000 : minuts to milliseconds
         
         this.Account = "";
         this.Password = "";
@@ -119,11 +113,10 @@ MyApplet.prototype = {
     },
 
     buildGmailFeeder: function() {
-        //global.log("buildGmailFeeder");
         this.getLoginAndPassword();
         
-        // As the entering of invalid Gmail accounts is not detected as an error by GmailFeeder
-        // here is a test to check the syntax of the entered email.
+        // As invalid Google accounts is not detected as an error by GmailFeeder
+        // here is a test to check the syntax of the email.
         // The regular expression is not specific to Gmail account 
         // since it is possible to set up Gmail for your own domain.
         // The problem still persists with syntaxical valid but non existing email account (dudul@gmail.com)
@@ -226,7 +219,7 @@ MyApplet.prototype = {
             this.newEmailsCount = params.count;
             this.menu.removeAll();
             
-            for (var i = 0; i < this.newEmailsCount && i < MaxDisplayEmails ; i++) {
+            for (var i = 0; i < this.newEmailsCount && i < Settings.MaxDisplayEmails ; i++) {
                 var message = params.messages[i];
                 
                 if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
