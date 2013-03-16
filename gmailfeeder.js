@@ -123,14 +123,14 @@ GmailFeeder.prototype.onResponse = function(session, message) {
             var messageId = entry.atomns::link.@href;
             var resultRegex = messageIdRegex.exec(messageId);
             
-            var message = {
+            var email = {
                     'title' : entry.atomns::title,
                     'summary' : entry.atomns::summary,
                     'authorName' : entry.atomns::author.atomns::name,
                     'authorEmail' : entry.atomns::author.atomns::email,
                     'id' : resultRegex != null && resultRegex.length > 1 ? resultRegex[1] : null
             };
-            params.messages.push(message);
+            params.messages.push(email);
         }
 
         if (this.callbacks.onChecked != undefined)
