@@ -23,30 +23,29 @@ const St = imports.gi.St;
 const Applet = imports.ui.applet;
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
+const Settings = imports.ui.settings;
 const Util = imports.misc.util;
 
 const AppletDirectory = imports.ui.appletManager.appletMeta["GmailChecker@LLOBERA"].path;
 imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
-const Settings = imports.settings;
 
 const AppletName = "Gmail Checker";
 const GmailUrl = "https://mail.google.com";
+const appletUUID = 'GmailChecker@LLOBERA';
 
-function MyApplet(orientation) {
-    this._init(orientation);
+function MyApplet(metadata, orientation, panel_height, instanceId) {
+    this._init(metadata, orientation, panel_height, instanceId);
 }
 
 MyApplet.prototype = {
     __proto__: Applet.IconApplet.prototype,
 
-    _init: function(orientation) {
+    _init: function(metadata, orientation, panel_height, instanceId) {
         this._chkMailTimerId = 0;
         this.newEmailsCount = 0;
         this.onCredentialsChangedCalls = 0;
-        
-        this.checkFrequency = Settings.CheckFrequency * 60000; // 60 * 1000 : minuts to milliseconds
         
         this.Account = "";
         this.Password = "";
@@ -57,9 +56,12 @@ MyApplet.prototype = {
         try {
             this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
           
-            this.menuManager = new PopupMenu.PopupMenuManager(this);
             this.menu = new Applet.AppletPopupMenu(this, orientation);
+            this.menuManager = new PopupMenu.PopupMenuManager(this);
             this.menuManager.addMenu(this.menu);
+          
+            this.settings = new Settings.AppletSettings(this, appletUUID, instanceId);
+            this.bindSettings();
           
             this.createContextMenu();
             
@@ -112,6 +114,22 @@ MyApplet.prototype = {
             Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/LICENSE.md");
         });
         this._applet_context_menu.addMenuItem(this.about_menu_item);
+        
+        let settingsItem = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, function() {
+            Util.trySpawnCommandLine("cinnamon-settings applets " + appletUUID);
+        });
+        this._applet_context_menu.addMenuItem(settingsItem);
+    },
+
+    bindSettings: function() {
+        this.settings.bindProperty(Settings.BindingDirection.IN,
+            "MaxDisplayEmails", "maxDisplayEmails", this.on_settings_changed, null);
+            
+        this.settings.bindProperty(Settings.BindingDirection.IN,
+            "CheckFrequency", "checkFrequency", this.on_settings_changed, null);
+    },
+    
+    on_settings_changed: function() {
     },
 
     buildGmailFeeder: function() {
@@ -236,7 +254,7 @@ MyApplet.prototype = {
             this.newEmailsCount = params.count;
             this.menu.removeAll();
             
-            for (var i = 0; i < this.newEmailsCount && i < Settings.MaxDisplayEmails ; i++) {
+            for (var i = 0; i < this.newEmailsCount && i < this.maxDisplayEmails ; i++) {
                 var message = params.messages[i];
                 
                 if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -281,11 +299,11 @@ MyApplet.prototype = {
 
     onTimerElasped: function() {
         this.gf.check();
-        this.updateTimer(this.checkFrequency);
+        this.updateTimer(this.checkFrequency * 60000); // 60 * 1000 : minuts to milliseconds
     }
 };
 
-function main(metadata, orientation) {
-    let myApplet = new MyApplet(orientation);
+function main(metadata, orientation, panel_height, instanceId) {
+    let myApplet = new MyApplet(metadata, orientation, panel_height, instanceId);
     return myApplet;
 }
