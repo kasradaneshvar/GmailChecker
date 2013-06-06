@@ -47,7 +47,7 @@ const PopupMenuExtension = imports.popupImageLeftMenuItem;
 
 const DebugMode = true;
 function LogDebug(message) {
-    if (DebufMode)
+    if (DebugMode)
         global.log(message);
 }
 
@@ -74,7 +74,7 @@ MyApplet.prototype = {
             this.menuManager.addMenu(this.menu);
           
             this.settings = new Settings.AppletSettings(this, appletUUID, instanceId);
-            this.bindSettings();
+            this.bind_settings();
           
             this.createContextMenu();
             
@@ -136,7 +136,7 @@ MyApplet.prototype = {
         this._applet_context_menu.addMenuItem(about_menu_item);
     },
 
-    bindSettings: function() {
+    bind_settings: function() {
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL,
             "EmailAccount", "newEmailAccount", this.on_email_changed, null);
             
@@ -144,10 +144,10 @@ MyApplet.prototype = {
             "Password", "newPassword", this.on_password_changed, null);
         
         this.settings.bindProperty(Settings.BindingDirection.IN,
-            "MaxDisplayEmails", "maxDisplayEmails", this.on_settings_changed, null);
+            "DisplayedEmailsNumber", "displayed_emails_number", this.rebuild_popup_menu, null);
             
         this.settings.bindProperty(Settings.BindingDirection.IN,
-            "CheckFrequency", "checkFrequency", this.on_settings_changed, null);
+            "CheckFrequency", "check_frequency", this.on_settings_changed, null);
     },
     
     on_settings_changed: function() {
@@ -242,31 +242,14 @@ MyApplet.prototype = {
         global.logError(message);
     },
   
-    on_checked: function(params) {
-        if (params.count > 0) {        
-            this.newEmailsCount = params.count;
-            this.menu.removeAll();
-            
-            for (var i = 0; i < this.newEmailsCount && i < this.maxDisplayEmails ; i++) {
-                var message = params.messages[i];
-                
-                if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-                
-                var menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
-                    _("From:") + " " + message.authorName + "\r\n" + 
-                    message.title + "\r\n\r\n" + message.summary + "\r\n...", 
-                    "mail-read", 
-                    message.id == null ? 
-                    "xdg-open " + GmailUrl :
-                    "xdg-open " + GmailUrl + "/mail/#inbox/" + message.id);
-                
-                menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
-                this.menu.addMenuItem(menuItem);
-            }
+    build_popup_menu: function() {
+        LogDebug("build_popup_menu");
+        if (this.inbox.count > 0) {        
+            this.rebuild_popup_menu();
 
-            this.set_applet_tooltip('You have ' + this.newEmailsCount + ' new mails.');
+            this.set_applet_tooltip('You have ' + this.inbox.count + ' new mails.');
             
-            var iconName = this.newEmailsCount > 9 ? "+" : this.newEmailsCount;
+            var iconName = this.inbox.count > 9 ? "+" : this.inbox.count;
             var iconPath = AppletDirectory + "/icons/" + iconName + ".svg";
             if (this.__icon_name != iconPath)
                 this.set_applet_icon_path(iconPath);
@@ -276,8 +259,29 @@ MyApplet.prototype = {
             if (this.__icon_name != iconPath)
                 this.set_applet_icon_path(iconPath);
             this.set_applet_tooltip("You don't have new emails.");
-            this.newEmailsCount = 0;
             this.menu.removeAll();
+        }
+    },
+    
+    rebuild_popup_menu: function() {
+        LogDebug("rebuild_popup_menu");     
+        this.menu.removeAll();
+        
+        for (let i = 0; i < this.inbox.count && i < this.displayed_emails_number ; i++) {
+            let message = this.inbox.messages[i];
+            
+            if (i > 0) this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            
+            let menuItem = new PopupMenuExtension.PopupImageLeftMenuItem(
+                _("From:") + " " + message.authorName + "\r\n" + 
+                message.title + "\r\n\r\n" + message.summary + "\r\n...", 
+                "mail-read", 
+                message.id == null ? 
+                "xdg-open " + GmailUrl :
+                "xdg-open " + GmailUrl + "/mail/#inbox/" + message.id);
+            
+            menuItem.connect("activate", function(actor, event) { Util.spawnCommandLine(actor.command); });
+            this.menu.addMenuItem(menuItem);
         }
     },
 
@@ -291,17 +295,27 @@ MyApplet.prototype = {
             this.timer_id = 0;
         }
         
-        if (timeout > 0) {
-            // start a new timer with the new timeout
-            this.timer_id = Mainloop.timeout_add(timeout, Lang.bind(this, this.on_timer_elapsed));
-        }
+        // start a new timer with the new timeout
+        this.timer_id = Mainloop.timeout_add(timeout, Lang.bind(this, this.on_timer_elapsed));
     },
 
     // when it's time to check the emails
     on_timer_elapsed: function() {
         LogDebug("on_timer_elapsed");
         this.check_emails();
-        this.update_timer(this.checkFrequency * 60000); // 60 * 1000 : minuts to milliseconds
+        this.update_timer(this.check_frequency * 60000); // 60 * 1000 : minuts to milliseconds
+    },
+    
+    on_applet_removed_from_panel: function() {
+        LogDebug("on_applet_removed_from_panel");
+        
+        //this.settings.finalize();
+        
+        // if this.timer_id != 0, it means a timer is running
+        if (this.timer_id) {
+            // stop the current running timer
+            Mainloop.source_remove(this.timer_id);
+        }
     },
     
     init_email_feeder: function() {
@@ -373,7 +387,7 @@ MyApplet.prototype = {
 
             let newMailsCount = feed.atomns::entry.length();
 
-            let params = { 'count' : newMailsCount, 'messages' : [] };
+            this.inbox = { 'count' : newMailsCount, 'messages' : [] };
             
             let messageIdRegex = new RegExp("message_id=([a-z0-9]+)&");
             
@@ -390,10 +404,10 @@ MyApplet.prototype = {
                         'authorEmail' : entry.atomns::author.atomns::email,
                         'id' : resultRegex != null && resultRegex.length > 1 ? resultRegex[1] : null
                 };
-                params.messages.push(email);
+                this.inbox.messages.push(email);
             }
 
-            this.on_checked(params);
+            this.build_popup_menu();
         }
         catch (e) {
             this.on_error('feedParseFailed', e);

@@ -11,7 +11,7 @@
         "default": ""
     },
     
-    "MaxDisplayEmails": {
+    "DisplayedEmailsNumber": {
         "type": "scale",
         "description": "The max number of emails displayed in the popup menu",
         "default": 4,
