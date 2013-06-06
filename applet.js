@@ -45,6 +45,12 @@ const AppletDirectory = imports.ui.appletManager.appletMeta[appletUUID].path;
 imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 
+const DebugMode = true;
+function LogDebug(message) {
+    if (DebufMode)
+        global.log(message);
+}
+
 
 function MyApplet(metadata, orientation, panel_height, instanceId) {
     this._init(metadata, orientation, panel_height, instanceId);
@@ -54,7 +60,7 @@ MyApplet.prototype = {
     __proto__: Applet.IconApplet.prototype,
 
     _init: function(metadata, orientation, panel_height, instanceId) {
-        global.log("START");
+        LogDebug("START");
         this.timer_id = 0;
         this.newEmailsCount = 0;
 
@@ -148,7 +154,7 @@ MyApplet.prototype = {
     },
     
     on_email_changed: function() {
-        global.log("on_email_changed: " + this.newEmailAccount + " | " + this.emailAccount);
+        LogDebug("on_email_changed: " + this.newEmailAccount + " | " + this.emailAccount);
         // due to a bug in cinnamon applet all the binding functions are called even if the setting wasn't changed
         if (this.newEmailAccount && this.newEmailAccount != this.emailAccount) {
             // As invalid Google accounts is not detected as an error
@@ -169,7 +175,7 @@ MyApplet.prototype = {
     },
     
     on_password_changed: function() {
-        global.log("on_password_changed: " + this.newPassword + " | " + this.password);
+        LogDebug("on_password_changed: " + this.newPassword + " | " + this.password);
         // due to a bug in cinnamon applet all the binding functions are called even if the setting wasn't changed
         if (this.newPassword && this.newPassword != this.getPassword()) {
             //this.setPassword(this.newPassword);
@@ -180,7 +186,7 @@ MyApplet.prototype = {
 
     // check if password and login are filled
     checkCrendentials: function() {
-        global.log("checkCrendentials email: " + this.emailAccount + " password: " + this.password);
+        LogDebug("checkCrendentials email: " + this.emailAccount + " password: " + this.password);
         return this.password && this.emailAccount; 
     },
 
@@ -277,7 +283,7 @@ MyApplet.prototype = {
 
     // update the time to wait until the next emails check
     update_timer: function(timeout) {
-        global.log("update_timer " + timeout + " milliseconds");
+        LogDebug("update_timer " + timeout + " milliseconds");
         // if this.timer_id != 0, it means a timer is running
         if (this.timer_id) {
             // stop the current running timer
@@ -293,7 +299,7 @@ MyApplet.prototype = {
 
     // when it's time to check the emails
     on_timer_elapsed: function() {
-        global.log("on_timer_elapsed");
+        LogDebug("on_timer_elapsed");
         this.check_emails();
         this.update_timer(this.checkFrequency * 60000); // 60 * 1000 : minuts to milliseconds
     },
