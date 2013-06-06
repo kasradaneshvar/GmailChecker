@@ -19,6 +19,7 @@ const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const Secret = imports.gi.Secret;
+const Soup = imports.gi.Soup;
 const St = imports.gi.St;
 
 const Applet = imports.ui.applet;
@@ -43,7 +44,6 @@ const GMAILCHECKER_SCHEMA = new Secret.Schema(
 const AppletDirectory = imports.ui.appletManager.appletMeta[appletUUID].path;
 imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
-const GmailFeeder = imports.gmailfeeder;
 
 
 function MyApplet(metadata, orientation, panel_height, instanceId) {
@@ -54,10 +54,11 @@ MyApplet.prototype = {
     __proto__: Applet.IconApplet.prototype,
 
     _init: function(metadata, orientation, panel_height, instanceId) {
-        this._chkMailTimerId = 0;
+        global.log("START");
+        this.timer_id = 0;
         this.newEmailsCount = 0;
 
-        Applet.IconApplet.prototype._init.call(this, orientation);
+        Applet.IconApplet.prototype._init.call(this, orientation, panel_height, instanceId);
 
         try {
             this.set_applet_icon_path(AppletDirectory + '/icons/NoEmail.svg');
@@ -71,11 +72,13 @@ MyApplet.prototype = {
           
             this.createContextMenu();
             
-            this.emailAccount = this.newEmailAccount;
-            this.getPassword();
+            this.init_email_feeder();
             
-            if (this.checkCrendentials())
-                this.buildGmailFeeder();
+
+            if (this.checkCrendentials()) {
+                // check after 2s
+                this.update_timer(2000);
+            }
             else {
                 Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials\"");
                 Util.trySpawnCommandLine("cinnamon-settings applets " + appletUUID);
@@ -94,7 +97,7 @@ MyApplet.prototype = {
     createContextMenu: function() {
         let check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, Lang.bind(this, function() {
             if (this.checkCrendentials())
-                this.onTimerElasped();
+                this.on_timer_elapsed();
             else
                 Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials.\"");
         }));
@@ -148,7 +151,7 @@ MyApplet.prototype = {
         global.log("on_email_changed: " + this.newEmailAccount + " | " + this.emailAccount);
         // due to a bug in cinnamon applet all the binding functions are called even if the setting wasn't changed
         if (this.newEmailAccount && this.newEmailAccount != this.emailAccount) {
-            // As invalid Google accounts is not detected as an error by GmailFeeder
+            // As invalid Google accounts is not detected as an error
             // here is a test to check the email syntax.
             // The regular expression is not specific to Gmail account 
             // since it is possible to set up Gmail for your own domain.
@@ -156,7 +159,7 @@ MyApplet.prototype = {
             var regex = new RegExp("[a-zA-Z0-9_\.-]+@[a-zA-Z0-9_\.-]+");
             if (regex.test(this.newEmailAccount)) {
                 this.emailAccount = this.newEmailAccount;
-                this.buildGmailFeeder();
+                this.init_email_feeder();
             }
             else {
                 this.newEmailAccount = this.emailAccount; // reset the incorrect email account
@@ -171,7 +174,7 @@ MyApplet.prototype = {
         if (this.newPassword && this.newPassword != this.getPassword()) {
             //this.setPassword(this.newPassword);
             //this.newPassword = ""; // reset the password for security reasons
-            this.buildGmailFeeder();
+            this.init_email_feeder();
         }
     },
 
@@ -181,31 +184,6 @@ MyApplet.prototype = {
         return this.password && this.emailAccount; 
     },
 
-    buildGmailFeeder: function() {
-        global.log("email: " + this.emailAccount + " password: " + this.password);
-        
-        this.gmailFeeder = new GmailFeeder.GmailFeeder({
-            'username' : this.emailAccount,
-            'password' : this.password,
-            'callbacks' : {
-                'onError' : Lang.bind(this, function(errorCode, errorMessage) { this.onError(errorCode, errorMessage) }),
-                'onChecked' : Lang.bind(this, function(params) { this.onChecked(params) })
-            }
-        });
-
-        // check after 2s
-        this.updateTimer(2000);
-    },
-
-    selectPythonBin: function() {
-        let [res, out, err, status] = GLib.spawn_command_line_sync("python -V");
-        var version = String(err).split(" ")[1][0];
-        if (version == 2)
-            return "python";
-        else
-            return "python2";
-    },
-    
     getPassword: function () {
         this.password = this.newPassword;
         
@@ -230,7 +208,7 @@ MyApplet.prototype = {
         this.password = password;
     },
 
-    onError: function(errorCode, errorMessage) {        
+    on_error: function(errorCode, errorMessage) {        
         var message = "";
         switch (errorCode) {
             case 'authFailed':
@@ -258,7 +236,7 @@ MyApplet.prototype = {
         global.logError(message);
     },
   
-    onChecked: function(params) {
+    on_checked: function(params) {
         if (params.count > 0) {        
             this.newEmailsCount = params.count;
             this.menu.removeAll();
@@ -296,21 +274,124 @@ MyApplet.prototype = {
             this.menu.removeAll();
         }
     },
-  
-    updateTimer: function(timeout) {
-        global.log("updateTimer");
-        if (this._chkMailTimerId) {
-            Mainloop.source_remove(this._chkMailTimerId);
-            this._chkMailTimerId = 0;
+
+    // update the time to wait until the next emails check
+    update_timer: function(timeout) {
+        global.log("update_timer " + timeout + " milliseconds");
+        // if this.timer_id != 0, it means a timer is running
+        if (this.timer_id) {
+            // stop the current running timer
+            Mainloop.source_remove(this.timer_id);
+            this.timer_id = 0;
         }
-        if (timeout > 0)
-            this._chkMailTimerId = Mainloop.timeout_add(timeout, Lang.bind(this, this.onTimerElasped));
+        
+        if (timeout > 0) {
+            // start a new timer with the new timeout
+            this.timer_id = Mainloop.timeout_add(timeout, Lang.bind(this, this.on_timer_elapsed));
+        }
     },
 
-    onTimerElasped: function() {
-        global.log("onTimerElasped");
-        this.gmailFeeder.check();
-        this.updateTimer(this.checkFrequency * 60000); // 60 * 1000 : minuts to milliseconds
+    // when it's time to check the emails
+    on_timer_elapsed: function() {
+        global.log("on_timer_elapsed");
+        this.check_emails();
+        this.update_timer(this.checkFrequency * 60000); // 60 * 1000 : minuts to milliseconds
+    },
+    
+    init_email_feeder: function() {
+        this.emailAccount = this.newEmailAccount;
+        this.getPassword();
+        
+        // Creating Namespace
+        this.atomns = new Namespace('http://purl.org/atom/ns#');
+        
+        // Creating SessionAsync
+        this.http_session = new Soup.SessionAsync();
+        
+        // Adding ProxyResolverDefault
+        Soup.Session.prototype.add_feature.call(this.http_session, new Soup.ProxyResolverDefault());
+        
+        // Connecting to authenticate signal
+        this.http_session.connect('authenticate', Lang.bind(this, this.on_authentication));
+    },
+    
+    on_authentication: function(session, msg, auth, retrying, user_data) {
+        if (retrying)
+            this.on_error("authFailed");
+        else
+            auth.authenticate(this.emailAccount, this.password);
+    },
+    
+    check_emails: function() {
+        let message = Soup.Message.new('GET', 'https://mail.google.com/mail/feed/atom/');
+        this.http_session.queue_message(message, Lang.bind(this, this.on_response));
+    },
+    
+    on_response: function(session, message) {
+        var atomns = this.atomns;
+
+        if (message.status_code != 200) {
+            if (message.status_code != 401 && message.status_code != 7) {
+                    this.on_error("feedReadFailed", "Status code : " + message.status_code);
+            }
+            
+            // log only for warning message
+            global.log("Feed reading failed. Status code : " + message.status_code);
+            return;
+        }
+        
+        /* Status Code
+         * 1 SOUP_STATUS_CANCELLED
+         * 2 SOUP_STATUS_CANT_RESOLVE
+         * 3 SOUP_STATUS_CANT_RESOLVE_PROXY
+         * 4 SOUP_STATUS_CANT_CONNECT
+         * 5 SOUP_STATUS_CANT_CONNECT_PROXY
+         * 6 SOUP_STATUS_SSL_FAILED
+         * 7 SOUP_STATUS_IO_ERROR
+         * 8 SOUP_STATUS_MALFORMED
+         * 9 SOUP_STATUS_TRY_AGAIN
+         * 10 SOUP_STATUS_TOO_MANY_REDIRECTS
+         * 11 SOUP_STATUS_TLS_FAILED
+         * 
+         * 200 Ok
+         * 
+         * 401 Unauthorized (authentication is required and has failed or has not yet been provided)
+         * 405 Method Not Allowed
+         */
+
+        try {
+            let feed = message.response_body.data;
+
+            feed = feed.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "");
+            feed = new XML(feed); // ECMAScript for XML (E4X)
+
+            let newMailsCount = feed.atomns::entry.length();
+
+            let params = { 'count' : newMailsCount, 'messages' : [] };
+            
+            let messageIdRegex = new RegExp("message_id=([a-z0-9]+)&");
+            
+            for (let i = 0; i < newMailsCount; i++) {
+                let entry = feed.atomns::entry[i];
+                
+                let messageId = entry.atomns::link.@href;
+                let resultRegex = messageIdRegex.exec(messageId);
+                
+                let email = {
+                        'title' : entry.atomns::title,
+                        'summary' : entry.atomns::summary,
+                        'authorName' : entry.atomns::author.atomns::name,
+                        'authorEmail' : entry.atomns::author.atomns::email,
+                        'id' : resultRegex != null && resultRegex.length > 1 ? resultRegex[1] : null
+                };
+                params.messages.push(email);
+            }
+
+            this.on_checked(params);
+        }
+        catch (e) {
+            this.on_error('feedParseFailed', e);
+        }
     }
 };
 
