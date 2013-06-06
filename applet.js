@@ -81,12 +81,12 @@ MyApplet.prototype = {
             this.init_email_feeder();
             
 
-            if (this.checkCrendentials()) {
+            if (this.check_crendentials()) {
                 // check after 2s
                 this.update_timer(2000);
             }
             else {
-                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials\"");
+                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": No credentials\"");
                 Util.trySpawnCommandLine("cinnamon-settings applets " + appletUUID);
             }
         }
@@ -102,10 +102,10 @@ MyApplet.prototype = {
     
     createContextMenu: function() {
         let check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, Lang.bind(this, function() {
-            if (this.checkCrendentials())
+            if (this.check_crendentials())
                 this.on_timer_elapsed();
             else
-                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials.\"");
+                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": No credentials.\"");
         }));
         this._applet_context_menu.addMenuItem(check_menu_item);
         
@@ -137,10 +137,10 @@ MyApplet.prototype = {
     },
 
     bind_settings: function() {
-        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL,
-            "EmailAccount", "newEmailAccount", this.on_email_changed, null);
+        this.settings.bindProperty(Settings.BindingDirection.IN,
+            "EmailAccount", "new_email_account", this.on_email_changed, null);
             
-        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL,
+        this.settings.bindProperty(Settings.BindingDirection.IN,
             "Password", "newPassword", this.on_password_changed, null);
         
         this.settings.bindProperty(Settings.BindingDirection.IN,
@@ -154,39 +154,34 @@ MyApplet.prototype = {
     },
     
     on_email_changed: function() {
-        LogDebug("on_email_changed: " + this.newEmailAccount + " | " + this.emailAccount);
-        // due to a bug in cinnamon applet all the binding functions are called even if the setting wasn't changed
-        if (this.newEmailAccount && this.newEmailAccount != this.emailAccount) {
-            // As invalid Google accounts is not detected as an error
-            // here is a test to check the email syntax.
-            // The regular expression is not specific to Gmail account 
-            // since it is possible to set up Gmail for your own domain.
-            // The problem still persists with syntaxical valid but non existing email account (dudul@gmail.com)
-            var regex = new RegExp("[a-zA-Z0-9_\.-]+@[a-zA-Z0-9_\.-]+");
-            if (regex.test(this.newEmailAccount)) {
-                this.emailAccount = this.newEmailAccount;
-                this.init_email_feeder();
-            }
-            else {
-                this.newEmailAccount = this.emailAccount; // reset the incorrect email account
-                Util.spawnCommandLine("notify-send --icon=error \"'"+ this.newEmailAccount + "' is not a correct email account (ex: name@gmail.com)\"");
-            }
+        LogDebug("on_email_changed: " + this.new_email_account + " | " + this.emailAccount);
+        
+        // on_email_changed is called more than one during the user typing
+        // so proceed to the email modification only if the new email is entirely typed
+        var regex = new RegExp('[a-zA-Z0-9_\.-]+@[a-zA-Z0-9_\.-]+\\.[a-zA-Z]{2,}');
+        if (regex.test(this.new_email_account)) {
+            LogDebug("new email: " + this.new_email_account);
+            this.emailAccount = this.new_email_account;
+            
+            // on_authentication will be called automatically if a valid connection is not yet set
+            // If a valid connection is already set, it seems impossible to change it
+            
+            if (this.check_crendentials())
+                this.on_timer_elapsed();
         }
     },
     
     on_password_changed: function() {
         LogDebug("on_password_changed: " + this.newPassword + " | " + this.password);
-        // due to a bug in cinnamon applet all the binding functions are called even if the setting wasn't changed
-        if (this.newPassword && this.newPassword != this.getPassword()) {
-            //this.setPassword(this.newPassword);
-            //this.newPassword = ""; // reset the password for security reasons
-            this.init_email_feeder();
-        }
+        
+        this.setPassword(this.newPassword);
+        if (this.check_crendentials())
+            this.on_timer_elapsed();
     },
 
     // check if password and login are filled
-    checkCrendentials: function() {
-        LogDebug("checkCrendentials email: " + this.emailAccount + " password: " + this.password);
+    check_crendentials: function() {
+        LogDebug("check_crendentials email: " + this.emailAccount + " password: " + this.password);
         return this.password && this.emailAccount; 
     },
 
@@ -198,7 +193,7 @@ MyApplet.prototype = {
     },
     
     setPassword: function (password) {
-        var attributes = {
+        /*var attributes = {
             "string": appletUUID,
             "string": this.emailAccount
         };
@@ -209,7 +204,7 @@ MyApplet.prototype = {
             Secret.COLLECTION_DEFAULT,
             "Label", 
             "Password", 
-            null);
+            null);*/
             
         this.password = password;
     },
@@ -223,7 +218,7 @@ MyApplet.prototype = {
                 this.newEmailsCount = 0;
                 this.menu.removeAll();
                 
-                var iconPath = AppletDirectory + "/icons/NoEmail.svg";
+                let iconPath = AppletDirectory + "/icons/NoEmail.svg";
                 if (this.__icon_name != iconPath)
                     this.set_applet_icon_path(iconPath);
                 break;
@@ -237,7 +232,7 @@ MyApplet.prototype = {
                 break;
         }
         
-        Util.spawnCommandLine("notify-send --icon=error \""+ message + "\"");
+        Util.spawnCommandLine("notify-send --icon=error \"" + message + "\"");
         this.set_applet_tooltip(message);
         global.logError(message);
     },
@@ -302,52 +297,68 @@ MyApplet.prototype = {
     // when it's time to check the emails
     on_timer_elapsed: function() {
         LogDebug("on_timer_elapsed");
-        this.check_emails();
+        // check emails
+        let message = Soup.Message.new('GET', 'https://mail.google.com/mail/feed/atom/');
+        this.http_session.queue_message(message, Lang.bind(this, this.on_response));
+
         this.update_timer(this.check_frequency * 60000); // 60 * 1000 : minuts to milliseconds
     },
     
     on_applet_removed_from_panel: function() {
         LogDebug("on_applet_removed_from_panel");
         
-        //this.settings.finalize();
-        
         // if this.timer_id != 0, it means a timer is running
         if (this.timer_id) {
             // stop the current running timer
             Mainloop.source_remove(this.timer_id);
         }
+        
+        this.settings.finalize();
     },
     
     init_email_feeder: function() {
-        this.emailAccount = this.newEmailAccount;
+        LogDebug("init_email_feeder");
+        this.emailAccount = this.new_email_account;
         this.getPassword();
         
         // Creating Namespace
         this.atomns = new Namespace('http://purl.org/atom/ns#');
         
         // Creating SessionAsync
-        this.http_session = new Soup.SessionAsync();
+        //this.http_session = new Soup.SessionAsync();
+        this.http_session = new Soup.Session();
         
+        // If you are using a plain SoupSession (ie, not SoupSessionAsync or SoupSessionSync), 
+        // then a SoupProxyResolverDefault will automatically be added to the session.
         // Adding ProxyResolverDefault
-        Soup.Session.prototype.add_feature.call(this.http_session, new Soup.ProxyResolverDefault());
+        //Soup.Session.prototype.add_feature.call(this.http_session, new Soup.ProxyResolverDefault());
+        
+        // Disconnect the previous authenticate signal
+        /*if (this.authenticate_signal_id) {
+            LogDebug("disconnect: " + this.authenticate_signal_id);
+            this.http_session.disconnect(this.authenticate_signal_id);
+        }*/
         
         // Connecting to authenticate signal
+        //this.authenticate_signal_id = this.http_session.connect('authenticate', Lang.bind(this, this.on_authentication));
         this.http_session.connect('authenticate', Lang.bind(this, this.on_authentication));
+        //LogDebug("connect: " + this.authenticate_signal_id);
+        // The "authenticate" signal is emitted when the session requires authentication. 
+        // If credentials are available call soup_auth_authenticate() on auth. 
+        // If these credentials fail, the signal will be emitted again, with retrying set to TRUE, 
+        // which will continue until you return without calling soup_auth_authenticate() on auth
     },
     
     on_authentication: function(session, msg, auth, retrying, user_data) {
+        LogDebug("on_authentication: " + this.emailAccount + " | " + this.password);
         if (retrying)
             this.on_error("authFailed");
         else
             auth.authenticate(this.emailAccount, this.password);
     },
     
-    check_emails: function() {
-        let message = Soup.Message.new('GET', 'https://mail.google.com/mail/feed/atom/');
-        this.http_session.queue_message(message, Lang.bind(this, this.on_response));
-    },
-    
     on_response: function(session, message) {
+        LogDebug("on_response");
         var atomns = this.atomns;
 
         if (message.status_code != 200) {
