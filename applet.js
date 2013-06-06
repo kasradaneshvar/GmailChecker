@@ -26,14 +26,15 @@ const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
 const Util = imports.misc.util;
 
-const AppletDirectory = imports.ui.appletManager.appletMeta["GmailChecker@LLOBERA"].path;
+const AppletName = "Gmail Checker";
+const GmailUrl = "https://mail.google.com";
+const appletUUID = 'GmailChecker@LLOBERA';
+
+const AppletDirectory = imports.ui.appletManager.appletMeta[appletUUID].path;
 imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const GmailFeeder = imports.gmailfeeder;
 
-const AppletName = "Gmail Checker";
-const GmailUrl = "https://mail.google.com";
-const appletUUID = 'GmailChecker@LLOBERA';
 
 function MyApplet(metadata, orientation, panel_height, instanceId) {
     this._init(metadata, orientation, panel_height, instanceId);
@@ -81,44 +82,44 @@ MyApplet.prototype = {
     },
     
     createContextMenu: function() {
-        this.check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, Lang.bind(this, function() {
+        let check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, Lang.bind(this, function() {
             if(!this.CredentialsError)
                 this.onTimerElasped();
             else
                 Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials.\"");
         }));
-        this._applet_context_menu.addMenuItem(this.check_menu_item);
+        this._applet_context_menu.addMenuItem(check_menu_item);
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        this.openGmail_menu_item = new Applet.MenuItem("Gmail", "internet-mail", function() {
+        let openGmail_menu_item = new Applet.MenuItem("Gmail", "internet-mail", function() {
             Main.Util.spawnCommandLine("xdg-open " + GmailUrl);
         });
-        this._applet_context_menu.addMenuItem(this.openGmail_menu_item);
+        this._applet_context_menu.addMenuItem(openGmail_menu_item);
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        this.setLoginAndPassword_menu_item = new Applet.MenuItem("Login & Pass", Gtk.STOCK_DIALOG_AUTHENTICATION, Lang.bind(this, function() {
+        let setLoginAndPassword_menu_item = new Applet.MenuItem("Login & Pass", Gtk.STOCK_DIALOG_AUTHENTICATION, Lang.bind(this, function() {
             this.setLoginAndPassword();
         }));
-        this._applet_context_menu.addMenuItem(this.setLoginAndPassword_menu_item);
-        
-        this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        
-        this.help_menu_item = new Applet.MenuItem(_("Help"), Gtk.STOCK_HELP, function() {
-            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.md");
-        });
-        this._applet_context_menu.addMenuItem(this.help_menu_item);
-        
-        this.about_menu_item = new Applet.MenuItem(_("About"), Gtk.STOCK_ABOUT,  function() {
-            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/LICENSE.md");
-        });
-        this._applet_context_menu.addMenuItem(this.about_menu_item);
+        this._applet_context_menu.addMenuItem(setLoginAndPassword_menu_item);
         
         let settingsItem = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, function() {
             Util.trySpawnCommandLine("cinnamon-settings applets " + appletUUID);
         });
         this._applet_context_menu.addMenuItem(settingsItem);
+        
+        this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
+        let help_menu_item = new Applet.MenuItem(_("Help"), Gtk.STOCK_HELP, function() {
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/README.md");
+        });
+        this._applet_context_menu.addMenuItem(help_menu_item);
+        
+        let about_menu_item = new Applet.MenuItem(_("About"), Gtk.STOCK_ABOUT,  function() {
+            Main.Util.spawnCommandLine("xdg-open " + AppletDirectory + "/LICENSE.md");
+        });
+        this._applet_context_menu.addMenuItem(about_menu_item);
     },
 
     bindSettings: function() {
