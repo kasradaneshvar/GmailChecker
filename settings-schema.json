@@ -1,7 +1,19 @@
 {
+    "EmailAccount": {
+        "type": "entry",
+        "description": "Your email account (ex: exemple@gmail.com)",
+        "default": ""
+    },
+    
+    "Password": {
+        "type": "entry",
+        "description": "Your password (will be stored in Gnome Keyring)",
+        "default": ""
+    },
+    
     "MaxDisplayEmails": {
         "type": "scale",
-        "description": "Max number of emails displayed in the popup menu",
+        "description": "The max number of emails displayed in the popup menu",
         "default": 4,
         "min": 1,
         "max": 10,
@@ -10,7 +22,7 @@
  
     "CheckFrequency": {
         "type": "scale",
-        "description": "Mailbox checking frequency, in minutes",
+        "description": "The mailbox checking frequency (in minutes)",
         "default": 5,
         "min": 1,
         "max": 60,

@@ -18,6 +18,7 @@ const _ = Gettext.gettext;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
+const Secret = imports.gi.Secret;
 const St = imports.gi.St;
 
 const Applet = imports.ui.applet;
@@ -29,6 +30,15 @@ const Util = imports.misc.util;
 const AppletName = "Gmail Checker";
 const GmailUrl = "https://mail.google.com";
 const appletUUID = 'GmailChecker@LLOBERA';
+
+const GMAILCHECKER_SCHEMA = new Secret.Schema(
+    "org.gnome.Application.Password",
+    Secret.SchemaFlags.NONE,
+    {
+        "string": Secret.SchemaAttributeType.STRING,
+        "string": Secret.SchemaAttributeType.STRING
+    }
+);
 
 const AppletDirectory = imports.ui.appletManager.appletMeta[appletUUID].path;
 imports.searchPath.push(AppletDirectory);
@@ -46,11 +56,6 @@ MyApplet.prototype = {
     _init: function(metadata, orientation, panel_height, instanceId) {
         this._chkMailTimerId = 0;
         this.newEmailsCount = 0;
-        this.onCredentialsChangedCalls = 0;
-        
-        this.Account = "";
-        this.Password = "";
-        this.CredentialsError = true;
 
         Applet.IconApplet.prototype._init.call(this, orientation);
 
@@ -66,10 +71,15 @@ MyApplet.prototype = {
           
             this.createContextMenu();
             
-            // needs to be before buildGmailFeeder because buildGmailFeeder may throw exceptions
-            this.listenCredentialsChanges();
+            this.emailAccount = this.newEmailAccount;
+            this.getPassword();
             
-            this.buildGmailFeeder();
+            if (this.checkCrendentials())
+                this.buildGmailFeeder();
+            else {
+                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials\"");
+                Util.trySpawnCommandLine("cinnamon-settings applets " + appletUUID);
+            }
         }
         catch (e) {
             global.logError(AppletName + ": " + e);
@@ -83,7 +93,7 @@ MyApplet.prototype = {
     
     createContextMenu: function() {
         let check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, Lang.bind(this, function() {
-            if(!this.CredentialsError)
+            if (this.checkCrendentials())
                 this.onTimerElasped();
             else
                 Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": Unvalid credentials.\"");
@@ -98,11 +108,6 @@ MyApplet.prototype = {
         this._applet_context_menu.addMenuItem(openGmail_menu_item);
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        
-        let setLoginAndPassword_menu_item = new Applet.MenuItem("Login & Pass", Gtk.STOCK_DIALOG_AUTHENTICATION, Lang.bind(this, function() {
-            this.setLoginAndPassword();
-        }));
-        this._applet_context_menu.addMenuItem(setLoginAndPassword_menu_item);
         
         let settingsItem = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, function() {
             Util.trySpawnCommandLine("cinnamon-settings applets " + appletUUID);
@@ -123,6 +128,12 @@ MyApplet.prototype = {
     },
 
     bindSettings: function() {
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL,
+            "EmailAccount", "newEmailAccount", this.on_email_changed, null);
+            
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL,
+            "Password", "newPassword", this.on_password_changed, null);
+        
         this.settings.bindProperty(Settings.BindingDirection.IN,
             "MaxDisplayEmails", "maxDisplayEmails", this.on_settings_changed, null);
             
@@ -132,34 +143,58 @@ MyApplet.prototype = {
     
     on_settings_changed: function() {
     },
-
-    buildGmailFeeder: function() {
-        this.getLoginAndPassword();
-        
-        if(!this.CredentialsError)
-        {
+    
+    on_email_changed: function() {
+        global.log("on_email_changed: " + this.newEmailAccount + " | " + this.emailAccount);
+        // due to a bug in cinnamon applet all the binding functions are called even if the setting wasn't changed
+        if (this.newEmailAccount && this.newEmailAccount != this.emailAccount) {
             // As invalid Google accounts is not detected as an error by GmailFeeder
-            // here is a test to check the syntax of the email.
+            // here is a test to check the email syntax.
             // The regular expression is not specific to Gmail account 
             // since it is possible to set up Gmail for your own domain.
             // The problem still persists with syntaxical valid but non existing email account (dudul@gmail.com)
             var regex = new RegExp("[a-zA-Z0-9_\.-]+@[a-zA-Z0-9_\.-]+");
-            if (regex.test(this.Account)) {
-                this.gf = new GmailFeeder.GmailFeeder({
-                    'username' : this.Account,
-                    'password' : this.Password,
-                    'callbacks' : {
-                        'onError' : Lang.bind(this, function(errorCode, errorMessage) { this.onError(errorCode, errorMessage) }),
-                        'onChecked' : Lang.bind(this, function(params) { this.onChecked(params) })
-                    }
-                });
-
-                // check after 2s
-                this.updateTimer(2000);
+            if (regex.test(this.newEmailAccount)) {
+                this.emailAccount = this.newEmailAccount;
+                this.buildGmailFeeder();
             }
-            else
-                Util.spawnCommandLine("notify-send --icon=error \"'"+ this.Account + "' is not a correct email account (ex: name@gmail.com)\"");
+            else {
+                this.newEmailAccount = this.emailAccount; // reset the incorrect email account
+                Util.spawnCommandLine("notify-send --icon=error \"'"+ this.newEmailAccount + "' is not a correct email account (ex: name@gmail.com)\"");
+            }
         }
+    },
+    
+    on_password_changed: function() {
+        global.log("on_password_changed: " + this.newPassword + " | " + this.password);
+        // due to a bug in cinnamon applet all the binding functions are called even if the setting wasn't changed
+        if (this.newPassword && this.newPassword != this.getPassword()) {
+            //this.setPassword(this.newPassword);
+            //this.newPassword = ""; // reset the password for security reasons
+            this.buildGmailFeeder();
+        }
+    },
+
+    // check if password and login are filled
+    checkCrendentials: function() {
+        global.log("checkCrendentials email: " + this.emailAccount + " password: " + this.password);
+        return this.password && this.emailAccount; 
+    },
+
+    buildGmailFeeder: function() {
+        global.log("email: " + this.emailAccount + " password: " + this.password);
+        
+        this.gmailFeeder = new GmailFeeder.GmailFeeder({
+            'username' : this.emailAccount,
+            'password' : this.password,
+            'callbacks' : {
+                'onError' : Lang.bind(this, function(errorCode, errorMessage) { this.onError(errorCode, errorMessage) }),
+                'onChecked' : Lang.bind(this, function(params) { this.onChecked(params) })
+            }
+        });
+
+        // check after 2s
+        this.updateTimer(2000);
     },
 
     selectPythonBin: function() {
@@ -170,58 +205,31 @@ MyApplet.prototype = {
         else
             return "python2";
     },
-  
-    getLoginAndPassword: function () {
-        let [res, out, err, status] = GLib.spawn_command_line_sync(
-            this.selectPythonBin() + " " + AppletDirectory + "/GetLoginAndPassword.py");
+    
+    getPassword: function () {
+        this.password = this.newPassword;
         
-        let code = String(out).split(" ")[0];
-        if(code == "0")
-        {
-            this.Account = String(out).split(" ")[1];
-            this.Password = String(out).split(" ")[2];
-            this.CredentialsError = false;
-        }
-        else if(code == "1")
-        {
-            this.CredentialsError = true;
-            Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": unable to get login and password from Gnome Keyring.\"");
-        }
-        else
-        {
-            this.CredentialsError = true;
-            Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": error in GetLoginAndPassword.py\"");
-            global.logError(AppletName + ": " + String(out).split(" ")[1]);
-        }
+        /*this.password = Secret.password_lookup_sync(
+            GMAILCHECKER_SCHEMA, { "string": appletUUID, "string": this.emailAccount }, null);*/
     },
     
-    setLoginAndPassword: function () {
-        GLib.spawn_command_line_async(
-            "gnome-terminal -x " + this.selectPythonBin() + " " + AppletDirectory + "/SetLoginAndPassword.py");
-        // the call of gnome-terminal does not wait the end of gnome-terminal to continue
-        // even in sync mode (because it is a window)
-        // that is why there is no more code here, because there is no way to wait
-        // the new credentils entered by the user
-        // to bypass this problem the applet listen the mofifications of the /tmp/gmailchecker.tmp file
-        // this file is modified after the user has entered the new credentials
-        // this way the applet is able to know exactly when the new credentials are ready
+    setPassword: function (password) {
+        var attributes = {
+            "string": appletUUID,
+            "string": this.emailAccount
+        };
+         
+        Secret.password_store_sync(
+            GMAILCHECKER_SCHEMA, 
+            attributes, 
+            Secret.COLLECTION_DEFAULT,
+            "Label", 
+            "Password", 
+            null);
+            
+        this.password = password;
     },
-    
-    listenCredentialsChanges: function() {
-        let file = Gio.file_new_for_path("/tmp/gmailchecker.tmp");
-        this._monitor = file.monitor_file(Gio.FileMonitorFlags.NONE, null);
-        this._monitor.connect('changed', Lang.bind(this, this.onCredentialsChanged));
-    },
-    
-    onCredentialsChanged: function() {      
-        // for 1 modification the onCredentialsChanged is called 3 times
-        if (++this.onCredentialsChangedCalls > 2)
-        {
-            this.onCredentialsChangedCalls = 0;
-            this.buildGmailFeeder();
-        }
-    },
-    
+
     onError: function(errorCode, errorMessage) {        
         var message = "";
         switch (errorCode) {
@@ -290,6 +298,7 @@ MyApplet.prototype = {
     },
   
     updateTimer: function(timeout) {
+        global.log("updateTimer");
         if (this._chkMailTimerId) {
             Mainloop.source_remove(this._chkMailTimerId);
             this._chkMailTimerId = 0;
@@ -299,7 +308,8 @@ MyApplet.prototype = {
     },
 
     onTimerElasped: function() {
-        this.gf.check();
+        global.log("onTimerElasped");
+        this.gmailFeeder.check();
         this.updateTimer(this.checkFrequency * 60000); // 60 * 1000 : minuts to milliseconds
     }
 };
