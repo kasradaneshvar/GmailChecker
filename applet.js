@@ -2,7 +2,7 @@
 // Developed by Nicolas LLOBERA <nllobera@gmail.com> from
 // # the Gmail Notifier Cinnamon Applet by denisigo <denis@sigov.ru> [http://cinnamon-spices.linuxmint.com/applets/view/73]
 // # the icons of the gmail-plasmoid project - [http://code.google.com/p/gmail-plasmoid]
-// version: 1.1 (03-03-2013)
+// version: 2.0 (07-06-2013)
 // License: GPLv3
 // Copyright © 2013 Nicolas LLOBERA
 
@@ -45,7 +45,7 @@ const AppletDirectory = imports.ui.appletManager.appletMeta[appletUUID].path;
 imports.searchPath.push(AppletDirectory);
 const PopupMenuExtension = imports.popupImageLeftMenuItem;
 
-const DebugMode = true;
+const DebugMode = false;
 function LogDebug(message) {
     if (DebugMode)
         global.log(message);
@@ -398,7 +398,7 @@ MyApplet.prototype = {
 
         if (message.status_code != 200) {
             if (message.status_code != 401 && message.status_code != 7) {
-                    this.on_error("feedReadFailed", "Status code : " + message.status_code);
+                this.on_error("feedReadFailed", "Status code : " + message.status_code);
             }
             
             // log only for warning message

@@ -4,39 +4,35 @@ GmailChecker
 Gmail Checker uses Atom throw a feed reader to receive new emails alerts.  
 The Gmail Checker will light when you will receive new emails and show you the number of your unread emails.  
 Your unread emails are displayed as a menu when you click on the Gmail Checker icon.  
-The Gmail inbox is checked at a frequency of 5 minuts by default, but you can do a manual check : right-click on the Gmail Checker icon -> Check
+The Gmail inbox is checked at a frequency of 5 minuts by default, but you can modify the frequency in the settings
 
 
 SETTINGS
 ============
 
-To configure the credentials : right-click on the Gmail Checker icon -> Login & Pass  
-A console will be displayed asking you your Gmail account and your password to store them in Gnome Keyring.  
-Then Gmail Checker will try to connect to Gmail with these credentials.  
-You can change your credentials this way at anytime.  
-  
-Two other settings are available at the beginning of the applet.js file :
-* The max number of emails displayed in the popup menu
-* The mailbox checking frequency  
-You can change these settings by editing the applet.js file, then restart cinnamon to apply them.
+To access to the settings: right-click on the Gmail Checker icon -> Settings
+
+Email account and password
+After having change your credentials, press on the "Set the email and password" button to apply your changes.
 
 
 SOFTWARE REQUIREMENTS
 ============
 
 * Gnome Keyring  
-  Because Gmail Checker store the credentials into Gnome Keyring
-  
-* Python 2
-* Python 2 bindings for Gnome Keyring  
-  Needed to access prgrammatically to Gnome Keyring
-  
-* Gnome-Terminal  
-  Used as a GUI to ask Gmail account and password
+  If you want to store your password into Gnome Keyring
 
 
 RELEASE
 ============
+
+v2.0 - 07-06-2013
+------------
+Add the new settings feature
+Move login and password to the settings (no more dependency to python and gnome-terminal)
+Storing the password in GnomeKeyring is an option
+Simplify the code of GmailFeeder
+
 
 v1.1 - 03-03-2013
 ------------
@@ -65,8 +61,6 @@ Important
   but this account doesn't exit
   
 * Use a window form to set or change the credentials instead of the console
-
-* Add proxy setting
 
 Nice to have
 ------------
