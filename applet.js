@@ -397,32 +397,31 @@ MyApplet.prototype = {
         var atomns = this.atomns;
 
         if (message.status_code != 200) {
-            if (message.status_code != 401 && message.status_code != 7) {
+            // ignore error codes 6 and 7 and 401
+            if (message.status_code != 401 && message.status_code != 7 && message.status_code != 6)
                 this.on_error("feedReadFailed", "Status code : " + message.status_code);
-            }
-            
-            // log only for warning message
-            global.log("Feed reading failed. Status code : " + message.status_code);
+
+            LogDebug("on_response error code : " + message.status_code)
             return;
         }
         
         /* Status Code
-         * 1 SOUP_STATUS_CANCELLED
-         * 2 SOUP_STATUS_CANT_RESOLVE
-         * 3 SOUP_STATUS_CANT_RESOLVE_PROXY
-         * 4 SOUP_STATUS_CANT_CONNECT
-         * 5 SOUP_STATUS_CANT_CONNECT_PROXY
-         * 6 SOUP_STATUS_SSL_FAILED
-         * 7 SOUP_STATUS_IO_ERROR
-         * 8 SOUP_STATUS_MALFORMED
-         * 9 SOUP_STATUS_TRY_AGAIN
-         * 10 SOUP_STATUS_TOO_MANY_REDIRECTS
-         * 11 SOUP_STATUS_TLS_FAILED
+         * 1 SOUP_STATUS_CANCELLED              -> Message was cancelled locally
+         * 2 SOUP_STATUS_CANT_RESOLVE           -> Unable to resolve destination host name
+         * 3 SOUP_STATUS_CANT_RESOLVE_PROXY     -> Unable to resolve proxy host name
+         * 4 SOUP_STATUS_CANT_CONNECT           -> Unable to connect to remote host
+         * 5 SOUP_STATUS_CANT_CONNECT_PROXY     -> Unable to connect to proxy
+         * 6 SOUP_STATUS_SSL_FAILED             -> SSL/TLS negotiation failed
+         * 7 SOUP_STATUS_IO_ERROR               -> A network error occurred, or the other end closed the connection unexpectedly
+         * 8 SOUP_STATUS_MALFORMED              -> Malformed data (usually a programmer error) 
+         * 9 SOUP_STATUS_TRY_AGAIN              -> Used internally 
+         * 10 SOUP_STATUS_TOO_MANY_REDIRECTS    -> There were too many redirections
+         * 11 SOUP_STATUS_TLS_FAILED            -> Used internally 
          * 
-         * 200 Ok
+         * 200 SOUP_STATUS_OK                   -> Also used by many lower-level soup routines to indicate success.
          * 
-         * 401 Unauthorized (authentication is required and has failed or has not yet been provided)
-         * 405 Method Not Allowed
+         * 401 SOUP_STATUS_UNAUTHORIZED         -> Unauthorized (authentication is required and has failed or has not yet been provided)
+         * 405 SOUP_STATUS_METHOD_NOT_ALLOWED   -> Method Not Allowed
          */
 
         try {
