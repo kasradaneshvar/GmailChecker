@@ -45,6 +45,12 @@
         "type": "checkbox",
         "description": "Display notifications in case of troubles",
         "default": true
+    },
+    
+    "OpenGmailCommand": {
+        "type": "entry",
+        "description": "Open Gmail command",
+        "default": "xdg-open https://mail.google.com"
     }
 }
 

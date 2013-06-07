@@ -76,7 +76,7 @@ MyApplet.prototype = {
             this.settings = new Settings.AppletSettings(this, appletUUID, instanceId);
             this.bind_settings();
           
-            this.createContextMenu();
+            this.create_context_menu();
             
             this.init_email_feeder();
             
@@ -98,7 +98,7 @@ MyApplet.prototype = {
         this.menu.toggle();
     },
     
-    createContextMenu: function() {
+    create_context_menu: function() {
         let icon_theme = Gtk.IconTheme.get_default();
         
         let check_menu_item_icon = icon_theme.has_icon("mail-receive") ? "mail-receive" : Gtk.STOCK_REFRESH;
@@ -112,11 +112,11 @@ MyApplet.prototype = {
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        let openGmail_menu_item_icon = icon_theme.has_icon("internet-mail") ? "internet-mail" : Gtk.STOCK_NETWORK;
-        let openGmail_menu_item = new Applet.MenuItem("Gmail", openGmail_menu_item_icon, function() {
-            Main.Util.spawnCommandLine("xdg-open " + GmailUrl);
-        });
-        this._applet_context_menu.addMenuItem(openGmail_menu_item);
+        let open_gmail_menu_item_icon = icon_theme.has_icon("internet-mail") ? "internet-mail" : Gtk.STOCK_NETWORK;
+        let open_gmail_menu_item = new Applet.MenuItem("Gmail", open_gmail_menu_item_icon, Lang.bind(this, function() {
+            Util.trySpawnCommandLine(this.open_gmail_command);
+        }));
+        this._applet_context_menu.addMenuItem(open_gmail_menu_item);
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
@@ -156,6 +156,9 @@ MyApplet.prototype = {
             
         this.settings.bindProperty(Settings.BindingDirection.IN,
             "DisplayNotifications", "display_notifications", this.on_settings_changed, null);
+            
+        this.settings.bindProperty(Settings.BindingDirection.IN,
+            "OpenGmailCommand", "open_gmail_command", this.on_settings_changed, null);
     },
     
     on_settings_changed: function() {

@@ -64,8 +64,6 @@ Important
 
 Nice to have
 ------------
-* Custom Gmail command to open local client instead of gmail web site
-
 * Play a sound when new emails are found
 
 * Use font style in the menu items
