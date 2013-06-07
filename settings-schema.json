@@ -17,6 +17,12 @@
         "callback": "on_email_and_password_changed"
     },
     
+    "StorePasswordInKeyring": {
+        "type": "checkbox",
+        "description": "Store the password in Gnome Keyring instead of the settings",
+        "default": false
+    },
+    
     "DisplayedEmailsNumber": {
         "type": "scale",
         "description": "The max number of emails displayed in the popup menu",

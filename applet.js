@@ -142,6 +142,9 @@ MyApplet.prototype = {
             
         this.settings.bindProperty(Settings.BindingDirection.IN,
             "Password", "new_password", this.on_settings_changed, null);
+            
+        this.settings.bindProperty(Settings.BindingDirection.IN,
+            "StorePasswordInKeyring", "store_in_keyring", this.on_store_password_changed, null);
         
         this.settings.bindProperty(Settings.BindingDirection.IN,
             "DisplayedEmailsNumber", "displayed_emails_number", this.rebuild_popup_menu, null);
@@ -159,7 +162,7 @@ MyApplet.prototype = {
         LogDebug("on_email_and_password_changed: " + this.new_email_account + " | " + this.new_password);
         
         this.emailAccount = this.new_email_account;
-        this.setPassword(this.new_password);
+        this.set_password(this.new_password);
             
         // on_authentication will be called automatically if a valid connection is not yet set
         // If a valid connection is already set, it seems impossible to change it
@@ -189,9 +192,15 @@ MyApplet.prototype = {
     on_password_changed: function() {
         LogDebug("on_password_changed: " + this.new_password + " | " + this.password);
         
-        this.setPassword(this.new_password);
+        this.set_password(this.new_password);
         if (this.check_crendentials())
             this.on_timer_elapsed();
+    },
+
+    on_store_password_changed: function() {
+        // only if a password is already known
+        if (this.password)
+            this.set_password(this.password); // store the password in its new place
     },
 
     // check if password and login are filled
@@ -202,27 +211,31 @@ MyApplet.prototype = {
 
     // get the password from the setting or Gnome Keyring
     get_password: function () {
-        this.password = this.new_password;
-        
-        /*this.password = Secret.password_lookup_sync(
-            GMAILCHECKER_SCHEMA, { "string": appletUUID, "string": this.emailAccount }, null);*/
+        if (this.store_in_keyring) {
+            this.password = Secret.password_lookup_sync(
+                GMAILCHECKER_SCHEMA, { "string": appletUUID, "string": this.emailAccount }, null);
+        }
+        else
+            this.password = this.new_password;
     },
     
-    setPassword: function (password) {
-        /*var attributes = {
-            "string": appletUUID,
-            "string": this.emailAccount
-        };
-         
-        Secret.password_store_sync(
-            GMAILCHECKER_SCHEMA, 
-            attributes, 
-            Secret.COLLECTION_DEFAULT,
-            "Label", 
-            "Password", 
-            null);*/
-            
-        this.password = password;
+    set_password: function (password) {
+        if (this.store_in_keyring) {
+            var attributes = {
+                "string": appletUUID,
+                "string": this.emailAccount
+            };
+             
+            Secret.password_store_sync(
+                GMAILCHECKER_SCHEMA, 
+                attributes, 
+                Secret.COLLECTION_DEFAULT,
+                "Label", 
+                "Password", 
+                null);
+        }
+        else
+            this.password = password;
     },
 
     on_error: function(errorCode, errorMessage) {        
