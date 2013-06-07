@@ -99,7 +99,10 @@ MyApplet.prototype = {
     },
     
     createContextMenu: function() {
-        let check_menu_item = new Applet.MenuItem("Check", "mail-receive"/*Gtk.STOCK_REFRESH*/, Lang.bind(this, function() {
+        let icon_theme = Gtk.IconTheme.get_default();
+        
+        let check_menu_item_icon = icon_theme.has_icon("mail-receive") ? "mail-receive" : Gtk.STOCK_REFRESH;
+        let check_menu_item = new Applet.MenuItem("Check", check_menu_item_icon, Lang.bind(this, function() {
             if (this.check_crendentials())
                 this.on_timer_elapsed();
             else
@@ -109,7 +112,8 @@ MyApplet.prototype = {
         
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        let openGmail_menu_item = new Applet.MenuItem("Gmail", "internet-mail", function() {
+        let openGmail_menu_item_icon = icon_theme.has_icon("internet-mail") ? "internet-mail" : Gtk.STOCK_NETWORK;
+        let openGmail_menu_item = new Applet.MenuItem("Gmail", openGmail_menu_item_icon, function() {
             Main.Util.spawnCommandLine("xdg-open " + GmailUrl);
         });
         this._applet_context_menu.addMenuItem(openGmail_menu_item);

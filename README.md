@@ -64,8 +64,6 @@ Important
 
 Nice to have
 ------------
-* Check if the icons exist (particulary mail-receive)
-
 * Custom Gmail command to open local client instead of gmail web site
 
 * Play a sound when new emails are found
