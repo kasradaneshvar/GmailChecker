@@ -4,7 +4,7 @@ GmailChecker
 Gmail Checker uses Atom throw a feed reader to receive new emails alerts.  
 The Gmail Checker will light when you will receive new emails and show you the number of your unread emails.  
 Your unread emails are displayed as a menu when you click on the Gmail Checker icon.  
-The Gmail inbox is checked at a frequency of 5 minuts by default, but you can modify the frequency in the settings
+The Gmail inbox is checked at a frequency of 5 minuts by default, but you can modify the frequency in the settings.
 
 
 SETTINGS
@@ -64,6 +64,10 @@ Important
 
 Nice to have
 ------------
+* Check if the icons exist (particulary mail-receive)
+
+* Custom Gmail command to open local client instead of gmail web site
+
 * Play a sound when new emails are found
 
 * Use font style in the menu items
