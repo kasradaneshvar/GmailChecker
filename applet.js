@@ -138,10 +138,10 @@ MyApplet.prototype = {
 
     bind_settings: function() {
         this.settings.bindProperty(Settings.BindingDirection.IN,
-            "EmailAccount", "new_email_account", this.on_email_changed, null);
+            "EmailAccount", "new_email_account", this.on_settings_changed, null);
             
         this.settings.bindProperty(Settings.BindingDirection.IN,
-            "Password", "newPassword", this.on_password_changed, null);
+            "Password", "new_password", this.on_settings_changed, null);
         
         this.settings.bindProperty(Settings.BindingDirection.IN,
             "DisplayedEmailsNumber", "displayed_emails_number", this.rebuild_popup_menu, null);
@@ -151,6 +151,21 @@ MyApplet.prototype = {
     },
     
     on_settings_changed: function() {
+    },
+    
+    // Use a button in the setting to set the credentials because the "entry" setting type emits the modification signal
+    // for each add/remove of character in the textbox. This is not the attended behavior.
+    on_email_and_password_changed: function() {
+        LogDebug("on_email_and_password_changed: " + this.new_email_account + " | " + this.new_password);
+        
+        this.emailAccount = this.new_email_account;
+        this.setPassword(this.new_password);
+            
+        // on_authentication will be called automatically if a valid connection is not yet set
+        // If a valid connection is already set, it seems impossible to change it
+        
+        if (this.check_crendentials())
+            this.on_timer_elapsed();
     },
     
     on_email_changed: function() {
@@ -172,9 +187,9 @@ MyApplet.prototype = {
     },
     
     on_password_changed: function() {
-        LogDebug("on_password_changed: " + this.newPassword + " | " + this.password);
+        LogDebug("on_password_changed: " + this.new_password + " | " + this.password);
         
-        this.setPassword(this.newPassword);
+        this.setPassword(this.new_password);
         if (this.check_crendentials())
             this.on_timer_elapsed();
     },
@@ -185,8 +200,9 @@ MyApplet.prototype = {
         return this.password && this.emailAccount; 
     },
 
-    getPassword: function () {
-        this.password = this.newPassword;
+    // get the password from the setting or Gnome Keyring
+    get_password: function () {
+        this.password = this.new_password;
         
         /*this.password = Secret.password_lookup_sync(
             GMAILCHECKER_SCHEMA, { "string": appletUUID, "string": this.emailAccount }, null);*/
@@ -319,7 +335,7 @@ MyApplet.prototype = {
     init_email_feeder: function() {
         LogDebug("init_email_feeder");
         this.emailAccount = this.new_email_account;
-        this.getPassword();
+        this.get_password();
         
         // Creating Namespace
         this.atomns = new Namespace('http://purl.org/atom/ns#');

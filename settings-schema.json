@@ -11,6 +11,12 @@
         "default": ""
     },
     
+    "SetEmailAndPassword": {
+        "type": "button",
+        "description": "Set the email and the password",
+        "callback": "on_email_and_password_changed"
+    },
+    
     "DisplayedEmailsNumber": {
         "type": "scale",
         "description": "The max number of emails displayed in the popup menu",
