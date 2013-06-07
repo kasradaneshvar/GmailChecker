@@ -80,19 +80,17 @@ MyApplet.prototype = {
             
             this.init_email_feeder();
             
-
             if (this.check_crendentials()) {
                 // check after 2s
                 this.update_timer(2000);
             }
             else {
-                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": No credentials\"");
+                this.notify("No credentials");
                 Util.trySpawnCommandLine("cinnamon-settings applets " + appletUUID);
             }
         }
         catch (e) {
-            global.logError(AppletName + ": " + e);
-            Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": " + e + "\"");
+            this.notify(e);
         }
     },
     
@@ -105,7 +103,7 @@ MyApplet.prototype = {
             if (this.check_crendentials())
                 this.on_timer_elapsed();
             else
-                Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": No credentials.\"");
+                this.notify("No credentials");
         }));
         this._applet_context_menu.addMenuItem(check_menu_item);
         
@@ -151,6 +149,9 @@ MyApplet.prototype = {
             
         this.settings.bindProperty(Settings.BindingDirection.IN,
             "CheckFrequency", "check_frequency", this.on_settings_changed, null);
+            
+        this.settings.bindProperty(Settings.BindingDirection.IN,
+            "DisplayNotifications", "display_notifications", this.on_settings_changed, null);
     },
     
     on_settings_changed: function() {
@@ -242,7 +243,7 @@ MyApplet.prototype = {
         var message = "";
         switch (errorCode) {
             case 'authFailed':
-                message = AppletName + ": authentication failed.";
+                message = "Authentication failed";
                 
                 this.newEmailsCount = 0;
                 this.menu.removeAll();
@@ -253,17 +254,15 @@ MyApplet.prototype = {
                 break;
                 
             case 'feedReadFailed':
-                message = AppletName + ": feed reading failed. " + errorMessage;
+                message = "Feed reading failed. " + errorMessage;
                 break;
                 
             case 'feedParseFailed':
-                message = AppletName + ": feed parsing failed. " + errorMessage;
+                message = "Feed parsing failed. " + errorMessage;
                 break;
         }
         
-        Util.spawnCommandLine("notify-send --icon=error \"" + message + "\"");
-        this.set_applet_tooltip(message);
-        global.logError(message);
+        this.notify(message);
     },
   
     build_popup_menu: function() {
@@ -331,6 +330,13 @@ MyApplet.prototype = {
         this.http_session.queue_message(message, Lang.bind(this, this.on_response));
 
         this.update_timer(this.check_frequency * 60000); // 60 * 1000 : minuts to milliseconds
+    },
+    
+    notify: function(message) {
+        if (this.display_notifications)
+            Util.spawnCommandLine("notify-send --icon=error \"" + AppletName + ": " + message + "\"");
+        this.set_applet_tooltip(message);
+        global.logError(AppletName + ": " + message);
     },
     
     on_applet_removed_from_panel: function() {

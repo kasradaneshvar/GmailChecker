@@ -39,6 +39,12 @@
         "min": 1,
         "max": 60,
         "step": 1
+    },
+    
+    "DisplayNotifications": {
+        "type": "checkbox",
+        "description": "Display notifications in case of troubles",
+        "default": true
     }
 }
 
