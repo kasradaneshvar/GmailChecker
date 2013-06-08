@@ -36,8 +36,8 @@ const GMAILCHECKER_SCHEMA = new Secret.Schema(
     "org.gnome.Application.Password",
     Secret.SchemaFlags.NONE,
     {
-        "string": Secret.SchemaAttributeType.STRING,
-        "string": Secret.SchemaAttributeType.STRING
+        "application_id": Secret.SchemaAttributeType.STRING,
+        "login": Secret.SchemaAttributeType.STRING
     }
 );
 
@@ -221,7 +221,7 @@ MyApplet.prototype = {
     get_password: function () {
         if (this.store_in_keyring) {
             this.password = Secret.password_lookup_sync(
-                GMAILCHECKER_SCHEMA, { "string": appletUUID, "string": this.emailAccount }, null);
+                GMAILCHECKER_SCHEMA, { "application_id": appletUUID, "login": this.emailAccount }, null);
         }
         else
             this.password = this.new_password;
@@ -230,8 +230,8 @@ MyApplet.prototype = {
     set_password: function (password) {
         if (this.store_in_keyring) {
             var attributes = {
-                "string": appletUUID,
-                "string": this.emailAccount
+                "application_id": appletUUID,
+                "login": this.emailAccount
             };
              
             Secret.password_store_sync(
