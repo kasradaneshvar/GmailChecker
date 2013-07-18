@@ -18,7 +18,6 @@ const _ = Gettext.gettext;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
-const Secret = imports.gi.Secret;
 const Soup = imports.gi.Soup;
 const St = imports.gi.St;
 
@@ -32,14 +31,22 @@ const AppletName = "Gmail Checker";
 const GmailUrl = "https://mail.google.com";
 const appletUUID = 'GmailChecker@LLOBERA';
 
-const GMAILCHECKER_SCHEMA = new Secret.Schema(
-    "org.gnome.Application.Password",
-    Secret.SchemaFlags.NONE,
-    {
-        "application_id": Secret.SchemaAttributeType.STRING,
-        "login": Secret.SchemaAttributeType.STRING
-    }
-);
+let libsecretAvailable = true;
+try {
+    const Secret = imports.gi.Secret;
+    
+    const GMAILCHECKER_SCHEMA = new Secret.Schema(
+        "org.gnome.Application.Password",
+        Secret.SchemaFlags.NONE,
+        {
+            "application_id": Secret.SchemaAttributeType.STRING,
+            "login": Secret.SchemaAttributeType.STRING
+        }
+    );
+} catch (e) {
+    libsecretAvailable = false;
+    global.log(AppletName + ": it seems that libsecret is not installed.");
+}
 
 const AppletDirectory = imports.ui.appletManager.appletMeta[appletUUID].path;
 imports.searchPath.push(AppletDirectory);
@@ -48,7 +55,7 @@ const PopupMenuExtension = imports.popupImageLeftMenuItem;
 const DebugMode = false;
 function LogDebug(message) {
     if (DebugMode)
-        global.log(message);
+        global.log(AppletName + ": " + message);
 }
 
 
@@ -206,6 +213,8 @@ MyApplet.prototype = {
     },
 
     on_store_password_changed: function() {
+        LogDebug("store_password on keyring: " + this.store_in_keyring + " password: " + this.password);
+        
         // only if a password is already known
         if (this.password)
             this.set_password(this.password); // store the password in its new place
@@ -219,21 +228,22 @@ MyApplet.prototype = {
 
     // get the password from the setting or Gnome Keyring
     get_password: function () {
-        if (this.store_in_keyring) {
+        if (libsecretAvailable && this.store_in_keyring) {
             this.password = Secret.password_lookup_sync(
                 GMAILCHECKER_SCHEMA, { "application_id": appletUUID, "login": this.emailAccount }, null);
+            LogDebug("password extract from keyring: " + this.password);
         }
         else
             this.password = this.new_password;
     },
     
     set_password: function (password) {
-        if (this.store_in_keyring) {
+        if (libsecretAvailable && this.store_in_keyring) {
             var attributes = {
                 "application_id": appletUUID,
                 "login": this.emailAccount
             };
-             
+            
             Secret.password_store_sync(
                 GMAILCHECKER_SCHEMA, 
                 attributes, 
@@ -241,6 +251,7 @@ MyApplet.prototype = {
                 "Label", 
                 "Password", 
                 null);
+            LogDebug("password stored in keyring.");
         }
         else
             this.password = password;
