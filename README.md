@@ -19,12 +19,21 @@ After having change your credentials, press on the "Set the email and password" 
 SOFTWARE REQUIREMENTS
 ============
 
-* Gnome Keyring  
+* Gnome Keyring and libsecret (https://live.gnome.org/Libsecret)
   If you want to store your password into Gnome Keyring
 
 
 RELEASE
 ============
+
+v2.1 - 19-07-2013
+------------
+The applet don't crash anymore is libsecret is not installed
+Allow to custom the OpenGmailCommand (the action when the Gmail menu/button is pressed)
+Use Gtk icons if the theme icons are not found
+Ignore Soup status code 6
+Change the keys in GMAILCHECKER_SCHEMA
+
 
 v2.0 - 07-06-2013
 ------------
