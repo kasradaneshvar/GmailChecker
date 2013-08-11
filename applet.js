@@ -378,24 +378,22 @@ MyApplet.prototype = {
         this.atomns = new Namespace('http://purl.org/atom/ns#');
         
         // Creating SessionAsync
-        //this.http_session = new Soup.SessionAsync();
-        this.http_session = new Soup.Session();
+        this.http_session = new Soup.SessionAsync();
         
         // If you are using a plain SoupSession (ie, not SoupSessionAsync or SoupSessionSync), 
         // then a SoupProxyResolverDefault will automatically be added to the session.
         // Adding ProxyResolverDefault
-        //Soup.Session.prototype.add_feature.call(this.http_session, new Soup.ProxyResolverDefault());
+        Soup.Session.prototype.add_feature.call(this.http_session, new Soup.ProxyResolverDefault());
         
         // Disconnect the previous authenticate signal
-        /*if (this.authenticate_signal_id) {
+        if (this.authenticate_signal_id) {
             LogDebug("disconnect: " + this.authenticate_signal_id);
             this.http_session.disconnect(this.authenticate_signal_id);
-        }*/
+        }
         
         // Connecting to authenticate signal
-        //this.authenticate_signal_id = this.http_session.connect('authenticate', Lang.bind(this, this.on_authentication));
-        this.http_session.connect('authenticate', Lang.bind(this, this.on_authentication));
-        //LogDebug("connect: " + this.authenticate_signal_id);
+        this.authenticate_signal_id = this.http_session.connect('authenticate', Lang.bind(this, this.on_authentication));
+        LogDebug("connect: " + this.authenticate_signal_id);
         // The "authenticate" signal is emitted when the session requires authentication. 
         // If credentials are available call soup_auth_authenticate() on auth. 
         // If these credentials fail, the signal will be emitted again, with retrying set to TRUE, 
