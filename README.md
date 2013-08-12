@@ -28,7 +28,7 @@ RELEASE
 
 v2.2 - 12.08.2013
 ------------
-Use Soup SessionAsync to prevent crashes on LinuxMint
+Use Soup SessionAsync to prevent crashes on LinuxMint  
 Fix the way the password is stored in the keyring
 
 
@@ -70,7 +70,7 @@ Important
 ------------
 * Call Gnome Keyring methods directly from Gjs without Python  
   http://stackoverflow.com/questions/14920159/unable-to-create-a-garray-in-gjs  
-  Another solution could to be use Vala to call Gnome Keyring methods, then to import the Vala library into Gjs
+  Another solution could to be use Vala to call Gnome Keyring methods, then to import the Vala library into Gjs  
   The use of LibSecret seems to be a good workaround
 * Display an error when a syntaxically valid but non-existing Gmail account (name@gmail.com) tries to connect
 
