@@ -26,6 +26,12 @@ SOFTWARE REQUIREMENTS
 RELEASE
 ============
 
+v2.2 - 12.08.2013
+------------
+Use Soup SessionAsync to prevent crashes on LinuxMint
+Fix the way the password is stored in the keyring
+
+
 v2.1 - 19.07.2013
 ------------
 The applet don't crash anymore if libsecret is not installed  
@@ -65,9 +71,8 @@ Important
 * Call Gnome Keyring methods directly from Gjs without Python  
   http://stackoverflow.com/questions/14920159/unable-to-create-a-garray-in-gjs  
   Another solution could to be use Vala to call Gnome Keyring methods, then to import the Vala library into Gjs
-* Display error when an syntaxically valid Gmail account (name@gmail.com) tries to connect  
-  but this account doesn't exit
-* Use a window form to set or change the credentials instead of the console
+  The use of LibSecret seems to be a good workaround
+* Display an error when a syntaxically valid but non-existing Gmail account (name@gmail.com) tries to connect
 
 Nice to have
 ------------
