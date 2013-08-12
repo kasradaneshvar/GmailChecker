@@ -245,12 +245,13 @@ MyApplet.prototype = {
             };
             
             Secret.password_store_sync(
-                GMAILCHECKER_SCHEMA, 
-                attributes, 
+                GMAILCHECKER_SCHEMA,
+                attributes,
                 Secret.COLLECTION_DEFAULT,
-                "Label", 
-                "Password", 
+                AppletName,
+                password,
                 null);
+            
             LogDebug("password stored in keyring.");
         }
         else
